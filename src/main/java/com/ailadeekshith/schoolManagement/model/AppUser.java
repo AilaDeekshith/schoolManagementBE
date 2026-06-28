@@ -1,5 +1,6 @@
 package com.ailadeekshith.schoolManagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -28,6 +29,13 @@ public class AppUser {
 
     @Column(unique = true)
     private String username;
+
+    @JsonIgnore
+    private String password;
+
+    @Column(name = "password_changed", nullable = false)
+    @Builder.Default
+    private boolean passwordChanged = false;
 
     private String phone;
 

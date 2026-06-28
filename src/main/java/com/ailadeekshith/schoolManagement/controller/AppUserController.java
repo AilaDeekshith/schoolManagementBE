@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
 public class AppUserController {
 
     private final AppUserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     public ResponseEntity<List<AppUser>> getAll() {
@@ -36,9 +38,17 @@ public class AppUserController {
         if (userRepo.existsByEmail(user.getEmail())) {
             throw new DuplicateResourceException("Email already in use: " + user.getEmail());
         }
-        if (user.getUsername() != null && userRepo.existsByUsername(user.getUsername())) {
+        // Derive username from email if not provided
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
+            user.setUsername(user.getEmail().split("@")[0]);
+        }
+        if (userRepo.existsByUsername(user.getUsername())) {
             throw new DuplicateResourceException("Username already taken: " + user.getUsername());
         }
+        // Default password: username@123
+        String defaultPassword = user.getUsername() + "@123";
+        user.setPassword(passwordEncoder.encode(defaultPassword));
+        user.setPasswordChanged(false);
         return ResponseEntity.status(HttpStatus.CREATED).body(userRepo.save(user));
     }
 
