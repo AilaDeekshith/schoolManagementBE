@@ -23,15 +23,38 @@ public class TimeTableServiceImpl implements TimeTableService {
     private final TimeTableRepository timeTableRepository;
     private final TeacherRepository teacherRepository;
 
+    // ── Resolve teacherId → Teacher entity ───────────────────
+    // This is the core fix: reads the @Transient teacherId from the
+    // request body and fetches the actual Teacher row from the DB,
+    // then sets it on the entity before saving.
+    private void resolveTeacher(TimeTable timeTable) {
+        Long tid = timeTable.getTeacherId();
+        if (tid != null) {
+            Teacher teacher = teacherRepository.findById(tid)
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + tid));
+            timeTable.setTeacher(teacher);
+            log.info("Resolved teacherId {} to teacher: {}", tid, teacher.getName());
+        } else {
+            timeTable.setTeacher(null);
+        }
+    }
+
     @Override
     public TimeTable createEntry(TimeTable timeTable) {
-        log.info("Creating timetable entry: {} {} P{}", timeTable.getClassName(), timeTable.getDayOfWeek(), timeTable.getPeriodNumber());
+        log.info("Creating timetable entry: {} {} P{}",
+                timeTable.getClassName(), timeTable.getDayOfWeek(), timeTable.getPeriodNumber());
+
         if (timeTableRepository.existsByClassNameAndDayOfWeekAndPeriodNumber(
                 timeTable.getClassName(), timeTable.getDayOfWeek(), timeTable.getPeriodNumber())) {
             throw new DuplicateResourceException(
                     "Timetable slot already exists for " + timeTable.getClassName()
-                            + " on " + timeTable.getDayOfWeek() + " period " + timeTable.getPeriodNumber());
+                            + " on " + timeTable.getDayOfWeek()
+                            + " period " + timeTable.getPeriodNumber());
         }
+
+        // ── FIX: resolve teacherId before save ──
+        resolveTeacher(timeTable);
+
         return timeTableRepository.save(timeTable);
     }
 
@@ -55,11 +78,18 @@ public class TimeTableServiceImpl implements TimeTableService {
         existing.setStartTime(updated.getStartTime());
         existing.setEndTime(updated.getEndTime());
 
-        if (updated.getTeacher() != null && updated.getTeacher().getId() != null) {
-            Teacher teacher = teacherRepository.findById(updated.getTeacher().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+        // ── FIX: resolve teacherId on update too ──
+        Long tid = updated.getTeacherId();
+        if (tid != null) {
+            Teacher teacher = teacherRepository.findById(tid)
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + tid));
             existing.setTeacher(teacher);
+            log.info("Updated teacher on timetable entry {} → {}", id, teacher.getName());
+        } else {
+            // If teacherId explicitly sent as null, clear the teacher
+            existing.setTeacher(null);
         }
+
         log.info("Updated timetable entry id: {}", id);
         return timeTableRepository.save(existing);
     }

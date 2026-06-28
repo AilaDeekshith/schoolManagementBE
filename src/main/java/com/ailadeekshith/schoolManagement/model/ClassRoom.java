@@ -36,6 +36,16 @@ public class ClassRoom {
     @Column(name = "class_monitor")
     private String classMonitor;
 
+    @Column(name = "rows")
+    private Integer rows;
+
+    @Column(name = "columns")
+    private Integer columns;
+
+    @Column(name = "students_per_bench")
+    @Builder.Default
+    private Integer studentsPerBench = 2;
+
     // ── Class teacher FK ─────────────────────────────────────
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_teacher_id")

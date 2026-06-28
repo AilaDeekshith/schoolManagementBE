@@ -3,6 +3,7 @@ package com.ailadeekshith.schoolManagement.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 
@@ -23,7 +24,7 @@ public class TimeTable {
 
     @NotBlank(message = "Class name is required")
     @Column(name = "class_name", nullable = false)
-    private String className;         // e.g. "10-A"
+    private String className;
 
     @NotNull(message = "Day of week is required")
     @Enumerated(EnumType.STRING)
@@ -32,7 +33,7 @@ public class TimeTable {
 
     @NotNull(message = "Period number is required")
     @Column(name = "period_number", nullable = false)
-    private Integer periodNumber;     // 1–8
+    private Integer periodNumber;
 
     @NotBlank(message = "Subject is required")
     @Column(nullable = false)
@@ -45,9 +46,17 @@ public class TimeTable {
     private LocalTime endTime;
 
     // ── Teacher FK ───────────────────────────────────────────
+    // JsonIgnoreProperties prevents infinite recursion during serialization
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Teacher teacher;
+
+    // ── Transient field to receive teacherId from JSON body ──
+    // Jackson will populate this from {"teacherId": 7}
+    // The service then looks up the Teacher entity by this id
+    @Transient
+    private Long teacherId;
 
     // ── Audit ─────────────────────────────────────────────────
     @Column(name = "created_at", updatable = false)
@@ -65,6 +74,13 @@ public class TimeTable {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // ── Convenience getter — returns teacher id from relation ─
+    // Used during serialization so the response includes teacherId
+    public Long getTeacherId() {
+        if (teacherId != null) return teacherId;
+        return teacher != null ? teacher.getId() : null;
     }
 
     // ── Enum ──────────────────────────────────────────────────

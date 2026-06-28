@@ -22,6 +22,7 @@ public class TimeTableResponseDTO {
     // Flattened teacher info
     private Long teacherId;
     private String teacherName;
+    private String teacherSubject;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
