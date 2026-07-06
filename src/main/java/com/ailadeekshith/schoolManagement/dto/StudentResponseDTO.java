@@ -30,6 +30,7 @@ public class StudentResponseDTO {
     private String contactNumber;
     private Student.StudentStatus status;
     private Student.FeeStatus feeStatus;
+    private String photoBase64;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

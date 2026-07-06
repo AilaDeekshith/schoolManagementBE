@@ -63,6 +63,7 @@ public class AppUserController {
         user.setDepartment(updated.getDepartment());
         user.setRole(updated.getRole());
         user.setStatus(updated.getStatus());
+        user.setPhotoBase64(updated.getPhotoBase64());
         return ResponseEntity.ok(userRepo.save(user));
     }
 

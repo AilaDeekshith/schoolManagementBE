@@ -2,57 +2,40 @@ package com.ailadeekshith.schoolManagement.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "app_users")
+@Table(name = "student_users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AppUser {
+public class StudentUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
-    @Column(nullable = false)
-    private String name;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "student_id", nullable = false)
+    private Student student;
 
-    @Email(message = "Invalid email")
     @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(unique = true)
     private String username;
 
     @JsonIgnore
+    @Column(nullable = false)
     private String password;
 
     @Column(name = "password_changed", nullable = false)
     @Builder.Default
     private boolean passwordChanged = false;
 
-    private String phone;
-
-    private String department;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private UserRole role = UserRole.STAFF;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private UserStatus status = UserStatus.ACTIVE;
-
-    @Column(name = "photo_base64", columnDefinition = "TEXT")
-    private String photoBase64;
+    private Status status = Status.ACTIVE;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -71,6 +54,5 @@ public class AppUser {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum UserRole   { SUPER_ADMIN, ADMIN, TEACHER, STAFF }
-    public enum UserStatus { ACTIVE, INACTIVE, SUSPENDED }
+    public enum Status { ACTIVE, INACTIVE }
 }

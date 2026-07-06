@@ -109,6 +109,7 @@ public class StudentServiceImpl implements StudentService {
         existing.setFeeStatus(updated.getFeeStatus());
         existing.setBusRoute(updated.getBusRoute());
         existing.setMedicalNotes(updated.getMedicalNotes());
+        existing.setPhotoBase64(updated.getPhotoBase64());
         log.info("Updated student id: {}", id);
         return studentRepository.save(existing);
     }

@@ -65,6 +65,23 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceRepo.findByStudentIdAndDateBetween(studentId, start, end));
     }
 
+    @GetMapping("/summary/today")
+    public ResponseEntity<Map<String, Object>> getTodaySummary() {
+        LocalDate today = LocalDate.now();
+        long total   = attendanceRepo.findByDate(today).size();
+        long present = attendanceRepo.countByDateAndStatus(today, Attendance.AttendanceStatus.PRESENT);
+        long absent  = attendanceRepo.countByDateAndStatus(today, Attendance.AttendanceStatus.ABSENT);
+        double pct   = total > 0 ? Math.round((present * 100.0 / total) * 10) / 10.0 : 0.0;
+        return ResponseEntity.ok(Map.of(
+            "date",            today.toString(),
+            "total",           total,
+            "present",         present,
+            "absent",          absent,
+            "percentage",      pct,
+            "hasData",         total > 0
+        ));
+    }
+
     @GetMapping("/class/{className}/summary")
     public ResponseEntity<List<Attendance>> getClassSummary(
             @PathVariable String className,

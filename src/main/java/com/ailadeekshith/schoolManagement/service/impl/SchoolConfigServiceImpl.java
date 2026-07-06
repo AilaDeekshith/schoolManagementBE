@@ -46,6 +46,7 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
         profile.setWebsite(incoming.getWebsite());
         profile.setAffiliationBoard(incoming.getAffiliationBoard());
         profile.setSchoolType(incoming.getSchoolType());
+        profile.setLogoBase64(incoming.getLogoBase64());
         return profileRepo.save(profile);
     }
 

@@ -82,6 +82,9 @@ public class Student {
     private FeeStatus feeStatus = FeeStatus.PENDING;
 
     // ── Audit ─────────────────────────────────────────────────
+    @Column(name = "photo_base64", columnDefinition = "TEXT")
+    private String photoBase64;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

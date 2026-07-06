@@ -46,6 +46,9 @@ public class Teacher {
     @Builder.Default
     private TeacherStatus status = TeacherStatus.ACTIVE;
 
+    @Column(name = "photo_base64", columnDefinition = "TEXT")
+    private String photoBase64;
+
     // ── Audit ─────────────────────────────────────────────────
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

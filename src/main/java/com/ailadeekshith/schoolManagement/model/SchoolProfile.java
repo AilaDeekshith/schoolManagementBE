@@ -40,4 +40,7 @@ public class SchoolProfile {
 
     @Column(name = "school_type")
     private String schoolType; // Government, Private, Aided
+
+    @Column(name = "logo_base64", columnDefinition = "TEXT")
+    private String logoBase64;
 }

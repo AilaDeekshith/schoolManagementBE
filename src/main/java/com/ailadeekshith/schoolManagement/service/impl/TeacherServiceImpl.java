@@ -53,6 +53,7 @@ public class TeacherServiceImpl implements TeacherService {
         existing.setExperience(updated.getExperience());
         existing.setAssignedClasses(updated.getAssignedClasses());
         existing.setStatus(updated.getStatus());
+        existing.setPhotoBase64(updated.getPhotoBase64());
         log.info("Updated teacher id: {}", id);
         return teacherRepository.save(existing);
     }

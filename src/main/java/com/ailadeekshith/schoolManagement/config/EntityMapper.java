@@ -49,6 +49,7 @@ public class EntityMapper {
                 .contactNumber(s.getContactNumber())
                 .status(s.getStatus())
                 .feeStatus(s.getFeeStatus())
+                .photoBase64(s.getPhotoBase64())
                 .createdAt(s.getCreatedAt())
                 .updatedAt(s.getUpdatedAt())
                 .build();
