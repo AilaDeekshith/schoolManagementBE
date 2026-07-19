@@ -43,4 +43,10 @@ public class SchoolProfile {
 
     @Column(name = "logo_base64", columnDefinition = "TEXT")
     private String logoBase64;
+
+    @Column(name = "dashboard_tagline")
+    private String dashboardTagline;
+
+    @Column(name = "dashboard_banner_base64", columnDefinition = "TEXT")
+    private String dashboardBannerBase64;
 }

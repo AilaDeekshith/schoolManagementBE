@@ -19,6 +19,8 @@ import java.util.List;
 public class SchoolConfigServiceImpl implements SchoolConfigService {
 
     private final SchoolProfileRepository profileRepo;
+    private final ReceiptTemplateRepository receiptTemplateRepo;
+    private final DashboardSlideRepository dashboardSlideRepo;
     private final GradeRepository gradeRepo;
     private final SectionRepository sectionRepo;
     private final SubjectRepository subjectRepo;
@@ -48,6 +50,119 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
         profile.setSchoolType(incoming.getSchoolType());
         profile.setLogoBase64(incoming.getLogoBase64());
         return profileRepo.save(profile);
+    }
+
+    // ── Receipt Templates ────────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReceiptTemplate> getAllReceiptTemplates() {
+        return receiptTemplateRepo.findAllByOrderByIdAsc();
+    }
+
+    @Override
+    public ReceiptTemplate createReceiptTemplate(ReceiptTemplate incoming) {
+        incoming.setId(null);
+        // First template becomes the default automatically.
+        boolean makeDefault = Boolean.TRUE.equals(incoming.getIsDefault())
+                || receiptTemplateRepo.count() == 0;
+        if (makeDefault) clearDefaultFlag();
+        incoming.setIsDefault(makeDefault);
+        return receiptTemplateRepo.save(incoming);
+    }
+
+    @Override
+    public ReceiptTemplate updateReceiptTemplate(Long id, ReceiptTemplate updated) {
+        ReceiptTemplate existing = receiptTemplateRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receipt template not found: " + id));
+        existing.setName(updated.getName());
+        existing.setTitle(updated.getTitle());
+        existing.setAccentColor(updated.getAccentColor());
+        existing.setShowLogo(updated.getShowLogo());
+        existing.setShowSchoolName(updated.getShowSchoolName());
+        existing.setShowSchoolAddress(updated.getShowSchoolAddress());
+        existing.setShowSchoolContact(updated.getShowSchoolContact());
+        existing.setShowReceiptNo(updated.getShowReceiptNo());
+        existing.setShowDate(updated.getShowDate());
+        existing.setShowAcademicYear(updated.getShowAcademicYear());
+        existing.setShowFeeType(updated.getShowFeeType());
+        existing.setShowPaymentMethod(updated.getShowPaymentMethod());
+        existing.setShowTransactionId(updated.getShowTransactionId());
+        existing.setShowTotals(updated.getShowTotals());
+        existing.setShowAmountInWords(updated.getShowAmountInWords());
+        existing.setThankYouMessage(updated.getThankYouMessage());
+        existing.setSignatureLabel(updated.getSignatureLabel());
+        existing.setFooterNote(updated.getFooterNote());
+        // Promoting to default here also demotes any other default.
+        if (Boolean.TRUE.equals(updated.getIsDefault()) && !Boolean.TRUE.equals(existing.getIsDefault())) {
+            clearDefaultFlag();
+            existing.setIsDefault(true);
+        }
+        return receiptTemplateRepo.save(existing);
+    }
+
+    @Override
+    public ReceiptTemplate setDefaultReceiptTemplate(Long id) {
+        ReceiptTemplate target = receiptTemplateRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receipt template not found: " + id));
+        clearDefaultFlag();
+        target.setIsDefault(true);
+        return receiptTemplateRepo.save(target);
+    }
+
+    @Override
+    public void deleteReceiptTemplate(Long id) {
+        ReceiptTemplate target = receiptTemplateRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receipt template not found: " + id));
+        boolean wasDefault = Boolean.TRUE.equals(target.getIsDefault());
+        receiptTemplateRepo.delete(target);
+        // Keep a default if any templates remain.
+        if (wasDefault) {
+            receiptTemplateRepo.findAllByOrderByIdAsc().stream().findFirst().ifPresent(t -> {
+                t.setIsDefault(true);
+                receiptTemplateRepo.save(t);
+            });
+        }
+    }
+
+    private void clearDefaultFlag() {
+        receiptTemplateRepo.findFirstByIsDefaultTrue().ifPresent(t -> {
+            t.setIsDefault(false);
+            receiptTemplateRepo.save(t);
+        });
+    }
+
+    // ── Dashboard Slides ─────────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<DashboardSlide> getAllDashboardSlides() {
+        return dashboardSlideRepo.findAllByOrderBySortOrderAscIdAsc();
+    }
+
+    @Override
+    public DashboardSlide createDashboardSlide(DashboardSlide incoming) {
+        incoming.setId(null);
+        if (incoming.getSortOrder() == null) {
+            // Append to the end of the current list.
+            incoming.setSortOrder(dashboardSlideRepo.findAll().size());
+        }
+        return dashboardSlideRepo.save(incoming);
+    }
+
+    @Override
+    public DashboardSlide updateDashboardSlide(Long id, DashboardSlide updated) {
+        DashboardSlide existing = dashboardSlideRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dashboard slide not found: " + id));
+        existing.setImageBase64(updated.getImageBase64());
+        existing.setTagline(updated.getTagline());
+        if (updated.getSortOrder() != null) existing.setSortOrder(updated.getSortOrder());
+        return dashboardSlideRepo.save(existing);
+    }
+
+    @Override
+    public void deleteDashboardSlide(Long id) {
+        DashboardSlide target = dashboardSlideRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dashboard slide not found: " + id));
+        dashboardSlideRepo.delete(target);
     }
 
     // ── Grades ───────────────────────────────────────────────

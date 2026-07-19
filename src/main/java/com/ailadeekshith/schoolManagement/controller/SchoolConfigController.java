@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,67 @@ public class SchoolConfigController {
     @PutMapping("/profile")
     public ResponseEntity<SchoolProfile> saveProfile(@RequestBody SchoolProfile profile) {
         return ResponseEntity.ok(configService.saveProfile(profile));
+    }
+
+    // ── Public branding (name + logo only, no auth required) ───
+    @GetMapping("/branding")
+    public ResponseEntity<Map<String, String>> getBranding() {
+        SchoolProfile profile = configService.getProfile();
+        Map<String, String> branding = new HashMap<>();
+        branding.put("schoolName", profile.getSchoolName());
+        branding.put("logoBase64", profile.getLogoBase64());
+        return ResponseEntity.ok(branding);
+    }
+
+    // ── Receipt Templates ─────────────────────────────────────
+    @GetMapping("/receipt-templates")
+    public ResponseEntity<List<ReceiptTemplate>> getReceiptTemplates() {
+        return ResponseEntity.ok(configService.getAllReceiptTemplates());
+    }
+
+    @PostMapping("/receipt-templates")
+    public ResponseEntity<ReceiptTemplate> createReceiptTemplate(@RequestBody ReceiptTemplate template) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(configService.createReceiptTemplate(template));
+    }
+
+    @PutMapping("/receipt-templates/{id}")
+    public ResponseEntity<ReceiptTemplate> updateReceiptTemplate(@PathVariable Long id,
+                                                                 @RequestBody ReceiptTemplate template) {
+        return ResponseEntity.ok(configService.updateReceiptTemplate(id, template));
+    }
+
+    @PatchMapping("/receipt-templates/{id}/default")
+    public ResponseEntity<ReceiptTemplate> setDefaultReceiptTemplate(@PathVariable Long id) {
+        return ResponseEntity.ok(configService.setDefaultReceiptTemplate(id));
+    }
+
+    @DeleteMapping("/receipt-templates/{id}")
+    public ResponseEntity<Void> deleteReceiptTemplate(@PathVariable Long id) {
+        configService.deleteReceiptTemplate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Dashboard Slides (hero carousel) ──────────────────────
+    @GetMapping("/dashboard-slides")
+    public ResponseEntity<List<DashboardSlide>> getDashboardSlides() {
+        return ResponseEntity.ok(configService.getAllDashboardSlides());
+    }
+
+    @PostMapping("/dashboard-slides")
+    public ResponseEntity<DashboardSlide> createDashboardSlide(@RequestBody DashboardSlide slide) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(configService.createDashboardSlide(slide));
+    }
+
+    @PutMapping("/dashboard-slides/{id}")
+    public ResponseEntity<DashboardSlide> updateDashboardSlide(@PathVariable Long id,
+                                                               @RequestBody DashboardSlide slide) {
+        return ResponseEntity.ok(configService.updateDashboardSlide(id, slide));
+    }
+
+    @DeleteMapping("/dashboard-slides/{id}")
+    public ResponseEntity<Void> deleteDashboardSlide(@PathVariable Long id) {
+        configService.deleteDashboardSlide(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ── Grades ────────────────────────────────────────────────

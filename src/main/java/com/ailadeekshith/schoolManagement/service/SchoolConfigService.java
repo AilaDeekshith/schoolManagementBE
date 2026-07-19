@@ -10,6 +10,19 @@ public interface SchoolConfigService {
     SchoolProfile getProfile();
     SchoolProfile saveProfile(SchoolProfile profile);
 
+    // ── Receipt Templates ─────────────────────────────────────
+    List<ReceiptTemplate> getAllReceiptTemplates();
+    ReceiptTemplate createReceiptTemplate(ReceiptTemplate template);
+    ReceiptTemplate updateReceiptTemplate(Long id, ReceiptTemplate template);
+    ReceiptTemplate setDefaultReceiptTemplate(Long id);
+    void deleteReceiptTemplate(Long id);
+
+    // ── Dashboard Slides (hero carousel) ──────────────────────
+    List<DashboardSlide> getAllDashboardSlides();
+    DashboardSlide createDashboardSlide(DashboardSlide slide);
+    DashboardSlide updateDashboardSlide(Long id, DashboardSlide slide);
+    void deleteDashboardSlide(Long id);
+
     // ── Grades ────────────────────────────────────────────────
     List<Grade> getAllGrades();
     Grade createGrade(Grade grade);
