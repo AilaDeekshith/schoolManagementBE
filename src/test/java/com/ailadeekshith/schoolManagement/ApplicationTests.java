@@ -1,9 +1,12 @@
 package com.ailadeekshith.schoolManagement;
 
+import com.ailadeekshith.schoolManagement.config.TestcontainersConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 @SpringBootTest
+@Import(TestcontainersConfig.class)
 class ApplicationTests {
 
 	@Test
