@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         AWS_REGION       = 'us-east-1'
-        AWS_ACCOUNT_ID   = '063903862154'                 // TODO: replace with your account ID
-        ECR_REPO         = 'schoolmanagementbe'
+        AWS_ACCOUNT_ID   = '123456789012'                 // TODO: replace with your account ID
+        ECR_REPO         = 'my-springboot-app'
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
         ECR_URI          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-        ECS_CLUSTER      = 'schoolManagement-cluster'
-        ECS_SERVICE      = 'schoolManagement-task-service-gnmqbd5o'
-        TASK_FAMILY      = 'schoolManagement-task'
+        ECS_CLUSTER      = 'my-cluster'
+        ECS_SERVICE      = 'my-springboot-service'
+        TASK_FAMILY      = 'my-springboot-task'
     }
 
     stages {
@@ -46,15 +46,13 @@ pipeline {
 
         stage('Push to ECR') {
             steps {
-                withAWS(credentials: 'aws-jenkins-creds', region: "${AWS_REGION}") {
-                    sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URI}
-                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
-                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
-                        docker push ${ECR_URI}:${IMAGE_TAG}
-                        docker push ${ECR_URI}:latest
-                    """
-                }
+                sh """
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URI}
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
+                    docker push ${ECR_URI}:${IMAGE_TAG}
+                    docker push ${ECR_URI}:latest
+                """
             }
         }
 
