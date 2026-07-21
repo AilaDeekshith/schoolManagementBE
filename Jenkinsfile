@@ -57,41 +57,39 @@ pipeline {
         }
 
         stage('Deploy to ECS') {
-            steps {
-                withAWS(credentials: 'aws-jenkins-creds', region: "${AWS_REGION}") {
-                    script {
-                        // Fetch current task definition, swap in the new image, register a new revision
-                        sh """
-                            aws ecs describe-task-definition --task-definition ${TASK_FAMILY} \
-                              --query 'taskDefinition' --output json > current-task-def.json
+                    steps {
+                        script {
+                            // Fetch current task definition, swap in the new image, register a new revision
+                            sh """
+                                aws ecs describe-task-definition --task-definition ${TASK_FAMILY} \
+                                  --region ${AWS_REGION} \
+                                  --query 'taskDefinition' --output json > current-task-def.json
 
-                            jq --arg IMAGE "${ECR_URI}:${IMAGE_TAG}" \
-                              '.containerDefinitions[0].image = \$IMAGE
-                               | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
-                                     .compatibilities, .registeredAt, .registeredBy)' \
-                              current-task-def.json > new-task-def.json
+                                jq --arg IMAGE "${ECR_URI}:${IMAGE_TAG}" \
+                                  '.containerDefinitions[0].image = \$IMAGE
+                                   | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                                         .compatibilities, .registeredAt, .registeredBy)' \
+                                  current-task-def.json > new-task-def.json
 
-                            aws ecs register-task-definition --cli-input-json file://new-task-def.json
+                                aws ecs register-task-definition --region ${AWS_REGION} --cli-input-json file://new-task-def.json
 
-                            aws ecs update-service \
-                              --cluster ${ECS_CLUSTER} \
-                              --service ${ECS_SERVICE} \
-                              --task-definition ${TASK_FAMILY} \
-                              --force-new-deployment
-                        """
+                                aws ecs update-service \
+                                  --region ${AWS_REGION} \
+                                  --cluster ${ECS_CLUSTER} \
+                                  --service ${ECS_SERVICE} \
+                                  --task-definition ${TASK_FAMILY} \
+                                  --force-new-deployment
+                            """
+                        }
                     }
                 }
-            }
-        }
 
         stage('Verify Deployment') {
-            steps {
-                withAWS(credentials: 'aws-jenkins-creds', region: "${AWS_REGION}") {
-                    sh """
-                        aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_SERVICE}
-                    """
-                }
-            }
+                    steps {
+                        sh """
+                            aws ecs wait services-stable --region ${AWS_REGION} --cluster ${ECS_CLUSTER} --services ${ECS_SERVICE}
+                        """
+                    }
         }
     }
 
