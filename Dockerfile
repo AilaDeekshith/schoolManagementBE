@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM gradle:8.10-jdk21 AS build
+FROM gradle:9.5.1-jdk21 AS build
 WORKDIR /app
 
 # Cache dependencies separately from source for faster rebuilds
