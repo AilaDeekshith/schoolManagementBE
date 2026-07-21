@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         AWS_REGION       = 'us-east-1'
-        AWS_ACCOUNT_ID   = '123456789012'                 // TODO: replace with your account ID
-        ECR_REPO         = 'my-springboot-app'
+        AWS_ACCOUNT_ID   = '063903862154'                 // TODO: replace with your account ID
+        ECR_REPO         = 'schoolmanagementbe'
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
         ECR_URI          = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-        ECS_CLUSTER      = 'my-cluster'
-        ECS_SERVICE      = 'my-springboot-service'
-        TASK_FAMILY      = 'my-springboot-task'
+        ECS_CLUSTER      = 'schoolManagement-cluster'
+        ECS_SERVICE      = 'schoolManagement-task-service-gnmqbd5o'
+        TASK_FAMILY      = 'schoolManagement-task'
     }
 
     stages {
