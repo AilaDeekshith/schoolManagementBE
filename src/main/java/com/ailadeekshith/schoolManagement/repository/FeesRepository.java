@@ -47,4 +47,5 @@ public interface FeesRepository extends JpaRepository<Fees, Long> {
 
     @Query("SELECT DISTINCT f.academicYear FROM Fees f WHERE f.academicYear IS NOT NULL ORDER BY f.academicYear DESC")
     List<String> findDistinctAcademicYears();
+
 }
