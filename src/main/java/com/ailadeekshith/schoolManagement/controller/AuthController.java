@@ -1,8 +1,10 @@
 package com.ailadeekshith.schoolManagement.controller;
 
 import com.ailadeekshith.schoolManagement.config.JwtUtil;
+import com.ailadeekshith.schoolManagement.dto.ModulePermissionDTO;
 import com.ailadeekshith.schoolManagement.model.AppUser;
 import com.ailadeekshith.schoolManagement.repository.AppUserRepository;
+import com.ailadeekshith.schoolManagement.repository.UserPermissionRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -11,7 +13,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,6 +25,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AppUserRepository userRepo;
+    private final UserPermissionRepository permissionRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authManager;
@@ -37,13 +43,18 @@ public class AuthController {
         AppUser user = userRepo.findByUsername(req.getUsername()).orElseThrow();
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
 
-        return ResponseEntity.ok(Map.of(
-                "token",           token,
-                "username",        user.getUsername(),
-                "name",            user.getName(),
-                "role",            user.getRole().name(),
-                "passwordChanged", user.isPasswordChanged()
-        ));
+        List<ModulePermissionDTO> permissions = permissionRepo.findByUserId(user.getId()).stream()
+                .map(p -> new ModulePermissionDTO(p.getModule(), p.isCanRead(), p.isCanWrite()))
+                .collect(Collectors.toList());
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("token",           token);
+        body.put("username",        user.getUsername());
+        body.put("name",            user.getName());
+        body.put("role",            user.getRole().name());
+        body.put("passwordChanged", user.isPasswordChanged());
+        body.put("permissions",     permissions);
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/change-password")

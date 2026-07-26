@@ -1,17 +1,22 @@
 package com.ailadeekshith.schoolManagement.controller;
 
+import com.ailadeekshith.schoolManagement.dto.ModulePermissionDTO;
 import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.AppUser;
+import com.ailadeekshith.schoolManagement.model.UserPermission;
 import com.ailadeekshith.schoolManagement.repository.AppUserRepository;
+import com.ailadeekshith.schoolManagement.repository.UserPermissionRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,6 +25,7 @@ import java.util.List;
 public class AppUserController {
 
     private final AppUserRepository userRepo;
+    private final UserPermissionRepository permissionRepo;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping
@@ -77,10 +83,43 @@ public class AppUserController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+        permissionRepo.deleteByUserId(id);
         userRepo.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Module access (per-user permissions) ──────────────────
+    @GetMapping("/{id}/permissions")
+    public ResponseEntity<List<ModulePermissionDTO>> getPermissions(@PathVariable Long id) {
+        userRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+        List<ModulePermissionDTO> perms = permissionRepo.findByUserId(id).stream()
+                .map(p -> new ModulePermissionDTO(p.getModule(), p.isCanRead(), p.isCanWrite()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(perms);
+    }
+
+    @PutMapping("/{id}/permissions")
+    @Transactional
+    public ResponseEntity<List<ModulePermissionDTO>> setPermissions(@PathVariable Long id,
+                                                                    @RequestBody List<ModulePermissionDTO> perms) {
+        AppUser user = userRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+        permissionRepo.deleteByUserId(id);
+        if (perms != null) {
+            perms.stream()
+                    .filter(p -> p.getModule() != null && (p.isCanRead() || p.isCanWrite()))
+                    .forEach(p -> permissionRepo.save(UserPermission.builder()
+                            .user(user)
+                            .module(p.getModule())
+                            // Write always implies read.
+                            .canRead(p.isCanRead() || p.isCanWrite())
+                            .canWrite(p.isCanWrite())
+                            .build()));
+        }
+        return getPermissions(id);
     }
 
     @GetMapping("/search")

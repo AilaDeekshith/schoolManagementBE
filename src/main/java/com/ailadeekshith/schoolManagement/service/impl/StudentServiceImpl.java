@@ -6,18 +6,22 @@ import com.ailadeekshith.schoolManagement.model.Fees;
 import com.ailadeekshith.schoolManagement.model.FeeStructure;
 import com.ailadeekshith.schoolManagement.model.SchoolProfile;
 import com.ailadeekshith.schoolManagement.model.Student;
+import com.ailadeekshith.schoolManagement.model.StudentUser;
 import com.ailadeekshith.schoolManagement.repository.FeesRepository;
 import com.ailadeekshith.schoolManagement.repository.FeeStructureRepository;
 import com.ailadeekshith.schoolManagement.repository.SchoolProfileRepository;
 import com.ailadeekshith.schoolManagement.repository.StudentRepository;
+import com.ailadeekshith.schoolManagement.repository.StudentUserRepository;
 import com.ailadeekshith.schoolManagement.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -30,6 +34,8 @@ public class StudentServiceImpl implements StudentService {
     private final FeesRepository feesRepository;
     private final FeeStructureRepository feeStructureRepository;
     private final SchoolProfileRepository schoolProfileRepository;
+    private final StudentUserRepository studentUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Student createStudent(Student student) {
@@ -37,7 +43,12 @@ public class StudentServiceImpl implements StudentService {
         if (student.getEmail() != null && studentRepository.existsByEmail(student.getEmail())) {
             throw new DuplicateResourceException("Email already registered: " + student.getEmail());
         }
+        // Generate the unique student identifier from the admission date + time.
+        student.setStudentCode(generateStudentCode(student.getAdmissionDate()));
         Student saved = studentRepository.save(student);
+
+        // Auto-create a student-portal login with a default password.
+        createLoginForStudent(saved);
 
         BigDecimal totalFee = feeStructureRepository.findAll().stream()
                 .filter(fs -> !Boolean.FALSE.equals(fs.getIsActive()))
@@ -70,6 +81,57 @@ public class StudentServiceImpl implements StudentService {
         } else {
             return (year - 1) + "-" + String.valueOf(year).substring(2);
         }
+    }
+
+    /** Builds a unique identifier like 202607251204 (yyyyMMddHHmm) from the admission date + current time. */
+    private String generateStudentCode(LocalDate admissionDate) {
+        LocalDate ad = admissionDate != null ? admissionDate : LocalDate.now();
+        LocalTime now = LocalTime.now();
+        String base = String.format("%04d%02d%02d%02d%02d",
+                ad.getYear(), ad.getMonthValue(), ad.getDayOfMonth(), now.getHour(), now.getMinute());
+        String code = base;
+        int suffix = 0;
+        while (studentRepository.existsByStudentCode(code)) {
+            suffix++;
+            code = base + suffix; // avoid rare same-minute collisions
+        }
+        return code;
+    }
+
+    /** Creates a student-portal login (username + default password username@123). */
+    private void createLoginForStudent(Student student) {
+        String base = usernameBase(student.getEmail(), student.getName());
+        String username = uniqueStudentUsername(base);
+        String rawPassword = username + "@123";
+        studentUserRepository.save(StudentUser.builder()
+                .student(student)
+                .username(username)
+                .password(passwordEncoder.encode(rawPassword))
+                .passwordChanged(false)
+                .status(StudentUser.Status.ACTIVE)
+                .build());
+        log.info("Created student login '{}' (default password {}@123)", username, username);
+    }
+
+    private String usernameBase(String email, String name) {
+        if (email != null && email.contains("@")) return sanitize(email.substring(0, email.indexOf('@')));
+        return sanitize(name);
+    }
+
+    private String sanitize(String s) {
+        if (s == null) return "user";
+        String out = s.toLowerCase().replaceAll("[^a-z0-9]", "");
+        return out.isBlank() ? "user" : out;
+    }
+
+    private String uniqueStudentUsername(String base) {
+        String username = base;
+        int i = 0;
+        while (studentUserRepository.existsByUsername(username)) {
+            i++;
+            username = base + i;
+        }
+        return username;
     }
 
     private boolean matchesClass(String gradeName, String className) {
@@ -110,6 +172,17 @@ public class StudentServiceImpl implements StudentService {
         existing.setBusRoute(updated.getBusRoute());
         existing.setMedicalNotes(updated.getMedicalNotes());
         existing.setPhotoBase64(updated.getPhotoBase64());
+        // Newly-collected details
+        existing.setFatherName(updated.getFatherName());
+        existing.setMotherName(updated.getMotherName());
+        existing.setFatherOccupation(updated.getFatherOccupation());
+        existing.setMotherOccupation(updated.getMotherOccupation());
+        existing.setEmergencyContact(updated.getEmergencyContact());
+        existing.setAadharNumber(updated.getAadharNumber());
+        existing.setCategory(updated.getCategory());
+        existing.setNationality(updated.getNationality());
+        existing.setReligion(updated.getReligion());
+        existing.setAdmissionDate(updated.getAdmissionDate());
         log.info("Updated student id: {}", id);
         return studentRepository.save(existing);
     }

@@ -79,6 +79,22 @@ public class FeesController {
         return ResponseEntity.ok(feesService.getFeesByAcademicYear(academicYear));
     }
 
+    // GET /api/fees/search?className=&academicYear=&status=&name=
+    @GetMapping("/search")
+    public ResponseEntity<List<Fees>> search(
+            @RequestParam(required = false) String className,
+            @RequestParam(required = false) String academicYear,
+            @RequestParam(required = false) Fees.FeeStatus status,
+            @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(feesService.searchFees(className, academicYear, status, name));
+    }
+
+    // GET /api/fees/academic-years
+    @GetMapping("/academic-years")
+    public ResponseEntity<List<String>> getAcademicYears() {
+        return ResponseEntity.ok(feesService.getAcademicYears());
+    }
+
     // GET /api/fees/summary
     @GetMapping("/summary")
     public ResponseEntity<Map<String, BigDecimal>> getSummary() {

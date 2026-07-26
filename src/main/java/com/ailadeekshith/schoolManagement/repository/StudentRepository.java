@@ -21,6 +21,10 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByStudentCode(String studentCode);
+
+    long countByClassName(String className);
+
     List<Student> findByNameContainingIgnoreCase(String name);
 
     @Query("SELECT s FROM Student s WHERE s.className = :className AND s.status = 'ACTIVE'")

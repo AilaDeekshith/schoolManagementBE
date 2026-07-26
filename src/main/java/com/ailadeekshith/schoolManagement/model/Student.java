@@ -52,6 +52,10 @@ public class Student {
     @Column(name = "roll_number")
     private Integer rollNumber;
 
+    /** Auto-generated unique identifier: yyyyMMddHHmm of admission (e.g. 202607251204). */
+    @Column(name = "student_code", unique = true)
+    private String studentCode;
+
     @Column(name = "admission_date")
     private LocalDate admissionDate;
 
@@ -61,7 +65,19 @@ public class Student {
     @Column(name = "medical_notes", columnDefinition = "TEXT")
     private String medicalNotes;
 
-    // ── Guardian ──────────────────────────────────────────────
+    // ── Parents / Guardian ────────────────────────────────────
+    @Column(name = "father_name")
+    private String fatherName;
+
+    @Column(name = "mother_name")
+    private String motherName;
+
+    @Column(name = "father_occupation")
+    private String fatherOccupation;
+
+    @Column(name = "mother_occupation")
+    private String motherOccupation;
+
     @NotBlank(message = "Guardian name is required")
     @Column(name = "guardian_name", nullable = false)
     private String guardianName;
@@ -69,6 +85,16 @@ public class Student {
     @NotBlank(message = "Contact number is required")
     @Column(name = "contact_number", nullable = false)
     private String contactNumber;
+
+    @Column(name = "emergency_contact")
+    private String emergencyContact;
+
+    // ── Identity / misc ───────────────────────────────────────
+    @Column(name = "aadhar_number")
+    private String aadharNumber;
+
+    @Column(name = "category")
+    private String category;          // General, OBC, SC, ST, EWS, etc.
 
     // ── Status ────────────────────────────────────────────────
     @Enumerated(EnumType.STRING)

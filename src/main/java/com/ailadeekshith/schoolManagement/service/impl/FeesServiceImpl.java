@@ -115,6 +115,25 @@ public class FeesServiceImpl implements FeesService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Fees> searchFees(String className, String academicYear, Fees.FeeStatus status, String name) {
+        // name uses "" (not null) as the "no filter" sentinel to avoid Postgres
+        // typing a null parameter as bytea inside lower()/concat().
+        return feesRepository.search(blankToNull(className), blankToNull(academicYear), status,
+                name == null ? "" : name.trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getAcademicYears() {
+        return feesRepository.findDistinctAcademicYears();
+    }
+
+    private String blankToNull(String s) {
+        return (s == null || s.trim().isEmpty()) ? null : s.trim();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public BigDecimal getTotalCollected() {
         BigDecimal total = feesRepository.getTotalCollected();
         return total != null ? total : BigDecimal.ZERO;

@@ -5,6 +5,7 @@ import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.ClassRoom;
 import com.ailadeekshith.schoolManagement.model.Teacher;
 import com.ailadeekshith.schoolManagement.repository.ClassRoomRepository;
+import com.ailadeekshith.schoolManagement.repository.StudentRepository;
 import com.ailadeekshith.schoolManagement.repository.TeacherRepository;
 import com.ailadeekshith.schoolManagement.service.ClassRoomService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,13 @@ public class ClassRoomServiceImpl implements ClassRoomService {
 
     private final ClassRoomRepository classRoomRepository;
     private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
+
+    /** Sets currentStrength to the live count of students in the class. */
+    private ClassRoom withLiveStrength(ClassRoom classRoom) {
+        classRoom.setCurrentStrength((int) studentRepository.countByClassName(classRoom.getClassName()));
+        return classRoom;
+    }
 
     @Override
     public ClassRoom createClassRoom(ClassRoom classRoom) {
@@ -38,8 +46,8 @@ public class ClassRoomServiceImpl implements ClassRoomService {
     @Override
     @Transactional(readOnly = true)
     public ClassRoom getClassRoomById(Long id) {
-        return classRoomRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("ClassRoom not found with id: " + id));
+        return withLiveStrength(classRoomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ClassRoom not found with id: " + id)));
     }
 
     @Override
@@ -52,7 +60,9 @@ public class ClassRoomServiceImpl implements ClassRoomService {
     @Override
     @Transactional(readOnly = true)
     public List<ClassRoom> getAllClassRooms() {
-        return classRoomRepository.findAll();
+        List<ClassRoom> rooms = classRoomRepository.findAll();
+        rooms.forEach(this::withLiveStrength);
+        return rooms;
     }
 
     @Override

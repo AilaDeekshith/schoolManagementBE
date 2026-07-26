@@ -16,6 +16,8 @@ public interface FeesService {
     List<Fees> getFeesByStudent(Long studentId);
     List<Fees> getFeesByStatus(Fees.FeeStatus status);
     List<Fees> getFeesByAcademicYear(String academicYear);
+    List<Fees> searchFees(String className, String academicYear, Fees.FeeStatus status, String name);
+    List<String> getAcademicYears();
     BigDecimal getTotalCollected();
     BigDecimal getTotalOutstanding();
 }

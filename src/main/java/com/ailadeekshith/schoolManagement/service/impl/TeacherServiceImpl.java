@@ -2,11 +2,14 @@ package com.ailadeekshith.schoolManagement.service.impl;
 
 import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
+import com.ailadeekshith.schoolManagement.model.AppUser;
 import com.ailadeekshith.schoolManagement.model.Teacher;
+import com.ailadeekshith.schoolManagement.repository.AppUserRepository;
 import com.ailadeekshith.schoolManagement.repository.TeacherRepository;
 import com.ailadeekshith.schoolManagement.service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,8 @@ import java.util.List;
 public class TeacherServiceImpl implements TeacherService {
 
     private final TeacherRepository teacherRepository;
+    private final AppUserRepository appUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Teacher createTeacher(Teacher teacher) {
@@ -26,7 +31,50 @@ public class TeacherServiceImpl implements TeacherService {
         if (teacherRepository.existsByEmail(teacher.getEmail())) {
             throw new DuplicateResourceException("Email already registered: " + teacher.getEmail());
         }
-        return teacherRepository.save(teacher);
+        Teacher saved = teacherRepository.save(teacher);
+
+        // Auto-create an app login (role TEACHER) with a default password.
+        createLoginForTeacher(saved);
+        return saved;
+    }
+
+    /** Creates a staff login for a teacher (username + default password username@123). */
+    private void createLoginForTeacher(Teacher teacher) {
+        String email = (teacher.getEmail() != null && teacher.getEmail().contains("@")) ? teacher.getEmail() : null;
+        String base = email != null ? sanitize(email.substring(0, email.indexOf('@'))) : sanitize(teacher.getName());
+        String username = uniqueUsername(base);
+        String userEmail = email != null ? email : username + "@school.local";
+        if (appUserRepository.existsByEmail(userEmail)) {
+            log.warn("Skipped teacher login creation — email already in use: {}", userEmail);
+            return;
+        }
+        String rawPassword = username + "@123";
+        appUserRepository.save(AppUser.builder()
+                .name(teacher.getName())
+                .email(userEmail)
+                .username(username)
+                .password(passwordEncoder.encode(rawPassword))
+                .passwordChanged(false)
+                .role(AppUser.UserRole.TEACHER)
+                .status(AppUser.UserStatus.ACTIVE)
+                .build());
+        log.info("Created teacher login '{}' (default password {}@123)", username, username);
+    }
+
+    private String sanitize(String s) {
+        if (s == null) return "teacher";
+        String out = s.toLowerCase().replaceAll("[^a-z0-9]", "");
+        return out.isBlank() ? "teacher" : out;
+    }
+
+    private String uniqueUsername(String base) {
+        String username = base;
+        int i = 0;
+        while (appUserRepository.existsByUsername(username)) {
+            i++;
+            username = base + i;
+        }
+        return username;
     }
 
     @Override
