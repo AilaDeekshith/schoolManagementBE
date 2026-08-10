@@ -27,6 +27,11 @@ public class ExamResult {
     @Column(nullable = false)
     private String subject;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Subject subjectRef;
+
     @Column(name = "marks_obtained")
     private Double marksObtained;
 

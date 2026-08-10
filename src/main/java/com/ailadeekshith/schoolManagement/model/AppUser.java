@@ -54,6 +54,13 @@ public class AppUser {
     @Column(name = "photo_base64", columnDefinition = "TEXT")
     private String photoBase64;
 
+    // A TEACHER-role login is linked one-to-one to its Teacher record.
+    // @JsonIgnore + LAZY keeps the /users payload light and avoids lazy-load issues.
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id", unique = true)
+    @JsonIgnore
+    private Teacher teacher;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

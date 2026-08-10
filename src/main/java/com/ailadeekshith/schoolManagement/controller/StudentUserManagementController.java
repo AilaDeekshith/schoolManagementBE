@@ -48,6 +48,9 @@ public class StudentUserManagementController {
         }
         Student student = studentRepo.findById(req.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + req.getStudentId()));
+        if (studentUserRepo.existsByStudentId(student.getId())) {
+            throw new DuplicateResourceException("This student already has a login account");
+        }
 
         String rawPassword = (req.getPassword() != null && !req.getPassword().isBlank())
                 ? req.getPassword()

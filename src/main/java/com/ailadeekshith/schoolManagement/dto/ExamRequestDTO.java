@@ -28,5 +28,4 @@ public class ExamRequestDTO {
 
     private String duration;
     private String instructions;
-    private Long examinerId;          // FK
 }

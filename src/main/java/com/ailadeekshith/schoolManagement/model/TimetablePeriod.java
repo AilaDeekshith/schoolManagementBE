@@ -25,6 +25,11 @@ public class TimetablePeriod {
     @Column(name = "class_name", nullable = false)
     private String className;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Section section;
+
     @NotNull(message = "Period number is required")
     @Column(name = "period_number", nullable = false)
     private Integer periodNumber;

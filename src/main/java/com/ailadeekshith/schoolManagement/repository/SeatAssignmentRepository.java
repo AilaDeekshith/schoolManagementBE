@@ -15,5 +15,7 @@ public interface SeatAssignmentRepository extends JpaRepository<SeatAssignment, 
     Optional<SeatAssignment> findByClassRoomIdAndRowNumAndColNumAndSeatIndex(
             Long classRoomId, int rowNum, int colNum, int seatIndex);
 
+    List<SeatAssignment> findByClassRoomIdAndStudentId(Long classRoomId, Long studentId);
+
     void deleteByClassRoomId(Long classRoomId);
 }

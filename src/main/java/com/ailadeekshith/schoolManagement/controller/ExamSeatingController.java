@@ -3,6 +3,7 @@ package com.ailadeekshith.schoolManagement.controller;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatDTO;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatingPlanDTO;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatingPlanRequest;
+import com.ailadeekshith.schoolManagement.dto.ExamSessionDTO;
 import com.ailadeekshith.schoolManagement.dto.SeatAssignRequest;
 import com.ailadeekshith.schoolManagement.service.ExamSeatingService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,28 @@ public class ExamSeatingController {
     @DeleteMapping("/plans/{id}")
     public ResponseEntity<Void> deletePlan(@PathVariable Long id) {
         seatingService.deletePlan(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Sessions (time periods within a room) ─────────────────
+    @GetMapping("/plans/{id}/sessions")
+    public ResponseEntity<List<ExamSessionDTO>> getSessions(@PathVariable Long id) {
+        return ResponseEntity.ok(seatingService.getSessions(id));
+    }
+
+    @PostMapping("/plans/{id}/sessions")
+    public ResponseEntity<ExamSessionDTO> addSession(@PathVariable Long id, @RequestBody ExamSessionDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(seatingService.addSession(id, dto));
+    }
+
+    @PutMapping("/sessions/{sessionId}")
+    public ResponseEntity<ExamSessionDTO> updateSession(@PathVariable Long sessionId, @RequestBody ExamSessionDTO dto) {
+        return ResponseEntity.ok(seatingService.updateSession(sessionId, dto));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
+        seatingService.deleteSession(sessionId);
         return ResponseEntity.noContent().build();
     }
 

@@ -40,6 +40,16 @@ public class ExamSchedule {
     @Column(name = "class_name")
     private String className;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Section section;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Subject subjectRef;
+
     @Column(name = "max_marks")
     private Integer maxMarks;
 

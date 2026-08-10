@@ -20,4 +20,13 @@ public interface FeesService {
     List<String> getAcademicYears();
     BigDecimal getTotalCollected();
     BigDecimal getTotalOutstanding();
+
+    /** Emails an outstanding-fee reminder for a single fee record. */
+    void sendFeeReminder(Long feeId);
+
+    /**
+     * Emails reminders for every outstanding fee (due amount &gt; 0), optionally
+     * scoped to an academic year. Returns the number of emails dispatched.
+     */
+    int sendReminders(String academicYear);
 }

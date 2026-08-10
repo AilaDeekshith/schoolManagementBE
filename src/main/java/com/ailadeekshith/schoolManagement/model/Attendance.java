@@ -24,6 +24,11 @@ public class Attendance {
     @Column(name = "class_name", nullable = false)
     private String className;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Section section;
+
     @Column(nullable = false)
     private LocalDate date;
 

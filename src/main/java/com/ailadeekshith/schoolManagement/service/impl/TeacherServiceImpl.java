@@ -4,8 +4,11 @@ import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.AppUser;
 import com.ailadeekshith.schoolManagement.model.Teacher;
+import com.ailadeekshith.schoolManagement.config.EmailProperties;
 import com.ailadeekshith.schoolManagement.repository.AppUserRepository;
 import com.ailadeekshith.schoolManagement.repository.TeacherRepository;
+import com.ailadeekshith.schoolManagement.service.EmailService;
+import com.ailadeekshith.schoolManagement.service.EmailTemplates;
 import com.ailadeekshith.schoolManagement.service.TeacherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,8 @@ public class TeacherServiceImpl implements TeacherService {
     private final TeacherRepository teacherRepository;
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final EmailProperties emailProperties;
 
     @Override
     public Teacher createTeacher(Teacher teacher) {
@@ -40,6 +45,9 @@ public class TeacherServiceImpl implements TeacherService {
 
     /** Creates a staff login for a teacher (username + default password username@123). */
     private void createLoginForTeacher(Teacher teacher) {
+        if (appUserRepository.existsByTeacherId(teacher.getId())) {
+            return; // one login per teacher
+        }
         String email = (teacher.getEmail() != null && teacher.getEmail().contains("@")) ? teacher.getEmail() : null;
         String base = email != null ? sanitize(email.substring(0, email.indexOf('@'))) : sanitize(teacher.getName());
         String username = uniqueUsername(base);
@@ -57,8 +65,16 @@ public class TeacherServiceImpl implements TeacherService {
                 .passwordChanged(false)
                 .role(AppUser.UserRole.TEACHER)
                 .status(AppUser.UserStatus.ACTIVE)
+                .teacher(teacher)
                 .build());
         log.info("Created teacher login '{}' (default password {}@123)", username, username);
+
+        // Email the credentials to the teacher's real address (if one was provided).
+        if (email != null) {
+            EmailTemplates.Email mail = EmailTemplates.welcomeCredentials(
+                    teacher.getName(), "Teacher", username, rawPassword, emailProperties.getLoginUrl());
+            emailService.sendEmail(email, mail.subject(), mail.html(), mail.text());
+        }
     }
 
     private String sanitize(String s) {

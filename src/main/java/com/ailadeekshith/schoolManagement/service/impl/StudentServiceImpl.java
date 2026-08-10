@@ -12,6 +12,9 @@ import com.ailadeekshith.schoolManagement.repository.FeeStructureRepository;
 import com.ailadeekshith.schoolManagement.repository.SchoolProfileRepository;
 import com.ailadeekshith.schoolManagement.repository.StudentRepository;
 import com.ailadeekshith.schoolManagement.repository.StudentUserRepository;
+import com.ailadeekshith.schoolManagement.config.EmailProperties;
+import com.ailadeekshith.schoolManagement.service.EmailService;
+import com.ailadeekshith.schoolManagement.service.EmailTemplates;
 import com.ailadeekshith.schoolManagement.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,9 @@ public class StudentServiceImpl implements StudentService {
     private final SchoolProfileRepository schoolProfileRepository;
     private final StudentUserRepository studentUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final EmailProperties emailProperties;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     @Override
     public Student createStudent(Student student) {
@@ -45,6 +51,7 @@ public class StudentServiceImpl implements StudentService {
         }
         // Generate the unique student identifier from the admission date + time.
         student.setStudentCode(generateStudentCode(student.getAdmissionDate()));
+        student.setSection(referenceResolver.resolveSection(student.getClassName()));
         Student saved = studentRepository.save(student);
 
         // Auto-create a student-portal login with a default password.
@@ -111,6 +118,14 @@ public class StudentServiceImpl implements StudentService {
                 .status(StudentUser.Status.ACTIVE)
                 .build());
         log.info("Created student login '{}' (default password {}@123)", username, username);
+
+        // Email the credentials to the student's real address (if one was provided).
+        String email = student.getEmail();
+        if (email != null && email.contains("@")) {
+            EmailTemplates.Email mail = EmailTemplates.welcomeCredentials(
+                    student.getName(), "Student", username, rawPassword, emailProperties.getLoginUrl());
+            emailService.sendEmail(email, mail.subject(), mail.html(), mail.text());
+        }
     }
 
     private String usernameBase(String email, String name) {
@@ -164,6 +179,7 @@ public class StudentServiceImpl implements StudentService {
         existing.setAddress(updated.getAddress());
         existing.setEmail(updated.getEmail());
         existing.setClassName(updated.getClassName());
+        existing.setSection(referenceResolver.resolveSection(updated.getClassName()));
         existing.setRollNumber(updated.getRollNumber());
         existing.setGuardianName(updated.getGuardianName());
         existing.setContactNumber(updated.getContactNumber());

@@ -53,6 +53,14 @@ public class SeatAssignmentServiceImpl implements SeatAssignmentService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
 
+        // Enforce one seat per student in this classroom: free any seat the
+        // student already occupies (move them) before assigning the new one.
+        seatAssignmentRepository.findByClassRoomIdAndStudentId(classRoomId, studentId).forEach(prev -> {
+            boolean samePosition = prev.getRowNum() == rowNum && prev.getColNum() == colNum && prev.getSeatIndex() == seatIndex;
+            if (!samePosition) seatAssignmentRepository.delete(prev);
+        });
+        seatAssignmentRepository.flush();
+
         Optional<SeatAssignment> existing = seatAssignmentRepository
                 .findByClassRoomIdAndRowNumAndColNumAndSeatIndex(classRoomId, rowNum, colNum, seatIndex);
 

@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TimetablePeriodServiceImpl implements TimetablePeriodService {
 
     private final TimetablePeriodRepository periodRepository;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     @Override
     public List<TimetablePeriod> savePeriodsForClass(String className, List<TimeTablePeriodRequestDto> periods) {
@@ -43,8 +44,10 @@ public class TimetablePeriodServiceImpl implements TimetablePeriodService {
 
         // Auto-assign period numbers in order
         AtomicInteger counter = new AtomicInteger(1);
+        var section = referenceResolver.resolveSection(className);
         timetablePeriodList.forEach(p -> {
             p.setClassName(className);
+            p.setSection(section);
             p.setPeriodNumber(counter.getAndIncrement());
             p.setId(null); // ensure insert not update
         });

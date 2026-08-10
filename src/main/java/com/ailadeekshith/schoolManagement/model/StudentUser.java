@@ -17,8 +17,9 @@ public class StudentUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "student_id", nullable = false)
+    // One login per student.
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "student_id", nullable = false, unique = true)
     private Student student;
 
     @Column(unique = true, nullable = false)

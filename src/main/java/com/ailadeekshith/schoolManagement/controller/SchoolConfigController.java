@@ -68,33 +68,10 @@ public class SchoolConfigController {
         return ResponseEntity.noContent().build();
     }
 
-    // ── Dashboard Slides (hero carousel) ──────────────────────
-    @GetMapping("/dashboard-slides")
-    public ResponseEntity<List<DashboardSlide>> getDashboardSlides() {
-        return ResponseEntity.ok(configService.getAllDashboardSlides());
-    }
-
-    @PostMapping("/dashboard-slides")
-    public ResponseEntity<DashboardSlide> createDashboardSlide(@RequestBody DashboardSlide slide) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(configService.createDashboardSlide(slide));
-    }
-
-    @PutMapping("/dashboard-slides/{id}")
-    public ResponseEntity<DashboardSlide> updateDashboardSlide(@PathVariable Long id,
-                                                               @RequestBody DashboardSlide slide) {
-        return ResponseEntity.ok(configService.updateDashboardSlide(id, slide));
-    }
-
-    @DeleteMapping("/dashboard-slides/{id}")
-    public ResponseEntity<Void> deleteDashboardSlide(@PathVariable Long id) {
-        configService.deleteDashboardSlide(id);
-        return ResponseEntity.noContent().build();
-    }
-
     // ── Grades ────────────────────────────────────────────────
     @GetMapping("/grades")
-    public ResponseEntity<List<Grade>> getGrades() {
-        return ResponseEntity.ok(configService.getAllGrades());
+    public ResponseEntity<List<com.ailadeekshith.schoolManagement.dto.GradeDTO>> getGrades() {
+        return ResponseEntity.ok(configService.getGradeTree());
     }
 
     @PostMapping("/grades")
@@ -114,6 +91,13 @@ public class SchoolConfigController {
                                               @RequestBody Map<String, String> body) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(configService.addSection(gradeId, body.get("letter")));
+    }
+
+    // Assign / clear a section's class teacher and physical room.
+    @PutMapping("/sections/{sectionId}")
+    public ResponseEntity<com.ailadeekshith.schoolManagement.dto.SectionDTO> updateSection(
+            @PathVariable Long sectionId, @RequestBody Map<String, Long> body) {
+        return ResponseEntity.ok(configService.updateSection(sectionId, body.get("classTeacherId"), body.get("roomId")));
     }
 
     @DeleteMapping("/sections/{sectionId}")

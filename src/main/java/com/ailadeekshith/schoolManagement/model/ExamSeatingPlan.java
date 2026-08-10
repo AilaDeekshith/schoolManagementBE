@@ -5,14 +5,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * A seating plan for a single room/hall used during an exam. Each plan belongs
- * to one {@link Exam} and defines the room layout (rows × columns × seats per
- * bench) plus the classes/sections whose students sit in this room.
+ * A seating plan for one room-sitting of an exam: a hall hosts sittings across
+ * multiple days and multiple sessions per day, so a plan is scoped to a
+ * (room + date + session) and has an invigilator assigned to it.
  */
 @Entity
-@Table(name = "exam_seating_plan", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"exam_id", "room_name"})
-})
+@Table(name = "exam_seating_plan")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,6 +27,11 @@ public class ExamSeatingPlan {
 
     @Column(name = "room_name", nullable = false)
     private String roomName;
+
+    // A room hosts many sessions (time periods), each with its own invigilator.
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<ExamSession> sessions = new java.util.ArrayList<>();
 
     @Column(name = "rows_count")
     private Integer rows;

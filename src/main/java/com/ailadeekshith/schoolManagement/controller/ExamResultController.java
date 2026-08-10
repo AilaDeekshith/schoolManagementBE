@@ -24,6 +24,7 @@ public class ExamResultController {
     private final ExamResultRepository resultRepo;
     private final ExamRepository       examRepo;
     private final StudentRepository    studentRepo;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     /** Save / update marks for a batch of students (one subject at a time). */
     @PostMapping("/bulk")
@@ -46,6 +47,7 @@ public class ExamResultController {
             result.setGrade(entry.getMarksObtained() != null
                     ? grade(entry.getMarksObtained(), exam.getMaxMarks()) : null);
             result.setRemarks(entry.getRemarks());
+            if (result.getSubjectRef() == null) result.setSubjectRef(referenceResolver.resolveSubject(req.getSubject()));
             saved.add(resultRepo.save(result));
         }
         return ResponseEntity.ok(saved);

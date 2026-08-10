@@ -5,7 +5,9 @@ import lombok.*;
 
 @Entity
 @Table(name = "seat_assignments", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"class_room_id", "row_num", "col_num", "seat_index"})
+    @UniqueConstraint(columnNames = {"class_room_id", "row_num", "col_num", "seat_index"}),
+    // A student can occupy only one seat within a classroom.
+    @UniqueConstraint(columnNames = {"class_room_id", "student_id"})
 })
 @Data
 @NoArgsConstructor

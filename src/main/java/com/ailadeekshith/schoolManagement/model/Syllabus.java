@@ -23,6 +23,16 @@ public class Syllabus {
     @Column(name = "grade_name", nullable = false)
     private String gradeName;          // e.g. "Grade 9"
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Grade grade;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Subject subject;
+
     @Column(name = "subject_name", nullable = false)
     private String subjectName;        // e.g. "Physics"
 

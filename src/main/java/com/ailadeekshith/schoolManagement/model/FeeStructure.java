@@ -20,6 +20,11 @@ public class FeeStructure {
     @Column(name = "grade_name", nullable = false)
     private String gradeName; // "Grade 10", "All Grades"
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Grade grade;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "fee_category", nullable = false)
     private FeeCategory feeCategory;

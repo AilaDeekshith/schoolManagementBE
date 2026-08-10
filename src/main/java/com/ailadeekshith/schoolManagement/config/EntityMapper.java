@@ -248,11 +248,6 @@ public class EntityMapper {
                 .status(e.getStatus())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt());
-
-        if (e.getExaminer() != null) {
-            builder.examinerId(e.getExaminer().getId())
-                    .examinerName(e.getExaminer().getName());
-        }
         return builder.build();
     }
 }

@@ -3,16 +3,20 @@ package com.ailadeekshith.schoolManagement.service.impl;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatDTO;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatingPlanDTO;
 import com.ailadeekshith.schoolManagement.dto.ExamSeatingPlanRequest;
-import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
+import com.ailadeekshith.schoolManagement.dto.ExamSessionDTO;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.Exam;
 import com.ailadeekshith.schoolManagement.model.ExamSeat;
 import com.ailadeekshith.schoolManagement.model.ExamSeatingPlan;
+import com.ailadeekshith.schoolManagement.model.ExamSession;
 import com.ailadeekshith.schoolManagement.model.Student;
+import com.ailadeekshith.schoolManagement.model.Teacher;
 import com.ailadeekshith.schoolManagement.repository.ExamRepository;
 import com.ailadeekshith.schoolManagement.repository.ExamSeatRepository;
 import com.ailadeekshith.schoolManagement.repository.ExamSeatingPlanRepository;
+import com.ailadeekshith.schoolManagement.repository.ExamSessionRepository;
 import com.ailadeekshith.schoolManagement.repository.StudentRepository;
+import com.ailadeekshith.schoolManagement.repository.TeacherRepository;
 import com.ailadeekshith.schoolManagement.service.ExamSeatingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,6 +40,13 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
     private final ExamSeatRepository seatRepo;
     private final ExamRepository examRepo;
     private final StudentRepository studentRepo;
+    private final TeacherRepository teacherRepo;
+    private final ExamSessionRepository sessionRepo;
+
+    private Teacher invigilatorOf(Long id) {
+        return id == null ? null : teacherRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found: " + id));
+    }
 
     // ── Plans ────────────────────────────────────────────────
     @Override
@@ -57,9 +68,8 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Exam not found: " + req.getExamId()));
         String room = req.getRoomName() == null ? "" : req.getRoomName().trim();
         if (room.isEmpty()) throw new IllegalArgumentException("Room name is required");
-        if (planRepo.existsByExamIdAndRoomNameIgnoreCase(exam.getId(), room)) {
-            throw new DuplicateResourceException("A room '" + room + "' already exists for this exam");
-        }
+        // A room can host multiple sittings (different days/sessions), so no
+        // room-uniqueness check here — a plan is one (room + date + session).
         ExamSeatingPlan plan = ExamSeatingPlan.builder()
                 .exam(exam)
                 .roomName(room)
@@ -98,7 +108,60 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
     public void deletePlan(Long planId) {
         ExamSeatingPlan plan = loadPlan(planId);
         seatRepo.deleteByPlanId(planId);
+        sessionRepo.deleteByPlanId(planId);
         planRepo.delete(plan);
+    }
+
+    // ── Sessions ─────────────────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExamSessionDTO> getSessions(Long planId) {
+        return sessionRepo.findByPlanIdOrderByExamDateAscStartTimeAsc(planId)
+                .stream().map(this::toSessionDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public ExamSessionDTO addSession(Long planId, ExamSessionDTO dto) {
+        ExamSeatingPlan plan = loadPlan(planId);
+        ExamSession s = ExamSession.builder()
+                .plan(plan)
+                .examDate(dto.getExamDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .invigilator(invigilatorOf(dto.getInvigilatorId()))
+                .build();
+        return toSessionDTO(sessionRepo.save(s));
+    }
+
+    @Override
+    public ExamSessionDTO updateSession(Long sessionId, ExamSessionDTO dto) {
+        ExamSession s = sessionRepo.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exam session not found: " + sessionId));
+        s.setExamDate(dto.getExamDate());
+        s.setStartTime(dto.getStartTime());
+        s.setEndTime(dto.getEndTime());
+        s.setInvigilator(invigilatorOf(dto.getInvigilatorId()));
+        return toSessionDTO(sessionRepo.save(s));
+    }
+
+    @Override
+    public void deleteSession(Long sessionId) {
+        ExamSession s = sessionRepo.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exam session not found: " + sessionId));
+        sessionRepo.delete(s);
+    }
+
+    private ExamSessionDTO toSessionDTO(ExamSession s) {
+        Teacher inv = s.getInvigilator();
+        return ExamSessionDTO.builder()
+                .id(s.getId())
+                .planId(s.getPlan() != null ? s.getPlan().getId() : null)
+                .examDate(s.getExamDate())
+                .startTime(s.getStartTime())
+                .endTime(s.getEndTime())
+                .invigilatorId(inv != null ? inv.getId() : null)
+                .invigilatorName(inv != null ? inv.getName() : null)
+                .build();
     }
 
     // ── Seats ────────────────────────────────────────────────
@@ -239,6 +302,8 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
                 .examSubject(exam != null ? exam.getSubject() : null)
                 .examDate(exam != null ? exam.getExamDate() : null)
                 .roomName(plan.getRoomName())
+                .sessions(sessionRepo.findByPlanIdOrderByExamDateAscStartTimeAsc(plan.getId())
+                        .stream().map(this::toSessionDTO).collect(Collectors.toList()))
                 .rows(plan.getRows())
                 .columns(plan.getColumns())
                 .seatsPerBench(plan.getSeatsPerBench())

@@ -2,9 +2,7 @@ package com.ailadeekshith.schoolManagement.service.impl;
 
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.Exam;
-import com.ailadeekshith.schoolManagement.model.Teacher;
 import com.ailadeekshith.schoolManagement.repository.ExamRepository;
-import com.ailadeekshith.schoolManagement.repository.TeacherRepository;
 import com.ailadeekshith.schoolManagement.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,16 +19,13 @@ import java.util.List;
 public class ExamServiceImpl implements ExamService {
 
     private final ExamRepository examRepository;
-    private final TeacherRepository teacherRepository;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     @Override
     public Exam createExam(Exam exam) {
         log.info("Scheduling exam: {}", exam.getName());
-        if (exam.getExaminer() != null && exam.getExaminer().getId() != null) {
-            Teacher examiner = teacherRepository.findById(exam.getExaminer().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
-            exam.setExaminer(examiner);
-        }
+        exam.setSection(referenceResolver.resolveSection(exam.getClassName()));
+        exam.setSubjectRef(referenceResolver.resolveSubject(exam.getSubject()));
         return examRepository.save(exam);
     }
 
@@ -53,17 +48,13 @@ public class ExamServiceImpl implements ExamService {
         existing.setName(updated.getName());
         existing.setSubject(updated.getSubject());
         existing.setClassName(updated.getClassName());
+        existing.setSection(referenceResolver.resolveSection(updated.getClassName()));
+        existing.setSubjectRef(referenceResolver.resolveSubject(updated.getSubject()));
         existing.setExamDate(updated.getExamDate());
         existing.setMaxMarks(updated.getMaxMarks());
         existing.setDuration(updated.getDuration());
         existing.setInstructions(updated.getInstructions());
         existing.setStatus(updated.getStatus());
-
-        if (updated.getExaminer() != null && updated.getExaminer().getId() != null) {
-            Teacher examiner = teacherRepository.findById(updated.getExaminer().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
-            existing.setExaminer(examiner);
-        }
         log.info("Updated exam id: {}", id);
         return examRepository.save(existing);
     }

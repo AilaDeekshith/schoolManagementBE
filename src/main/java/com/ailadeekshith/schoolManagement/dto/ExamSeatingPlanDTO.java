@@ -15,6 +15,7 @@ public class ExamSeatingPlanDTO {
     private String examSubject;
     private LocalDate examDate;
     private String roomName;
+    private List<ExamSessionDTO> sessions;
     private Integer rows;
     private Integer columns;
     private Integer seatsPerBench;

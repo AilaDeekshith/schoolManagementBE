@@ -9,7 +9,9 @@ import lombok.*;
  */
 @Entity
 @Table(name = "exam_seat", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"plan_id", "row_num", "col_num", "seat_index"})
+        @UniqueConstraint(columnNames = {"plan_id", "row_num", "col_num", "seat_index"}),
+        // A student can occupy only one seat within an exam seating plan.
+        @UniqueConstraint(columnNames = {"plan_id", "student_id"})
 })
 @Data
 @NoArgsConstructor

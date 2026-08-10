@@ -29,6 +29,16 @@ public class Exam {
     @Column(name = "class_name")
     private String className;         // "All" or specific class
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Section section;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Subject subjectRef;
+
     @NotNull(message = "Exam date is required")
     @Column(name = "exam_date", nullable = false)
     private LocalDate examDate;
@@ -41,11 +51,6 @@ public class Exam {
 
     @Column(columnDefinition = "TEXT")
     private String instructions;
-
-    // ── Examiner FK ──────────────────────────────────────────
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "examiner_id")
-    private Teacher examiner;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -26,6 +26,16 @@ public class TimeTable {
     @Column(name = "class_name", nullable = false)
     private String className;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Section section;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Subject subjectRef;
+
     @NotNull(message = "Day of week is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false)

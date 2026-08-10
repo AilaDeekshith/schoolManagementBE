@@ -22,6 +22,7 @@ public class TimeTableServiceImpl implements TimeTableService {
 
     private final TimeTableRepository timeTableRepository;
     private final TeacherRepository teacherRepository;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     // ── Resolve teacherId → Teacher entity ───────────────────
     // This is the core fix: reads the @Transient teacherId from the
@@ -54,6 +55,8 @@ public class TimeTableServiceImpl implements TimeTableService {
 
         // ── FIX: resolve teacherId before save ──
         resolveTeacher(timeTable);
+        timeTable.setSection(referenceResolver.resolveSection(timeTable.getClassName()));
+        timeTable.setSubjectRef(referenceResolver.resolveSubject(timeTable.getSubject()));
 
         return timeTableRepository.save(timeTable);
     }
@@ -75,6 +78,7 @@ public class TimeTableServiceImpl implements TimeTableService {
     public TimeTable updateEntry(Long id, TimeTable updated) {
         TimeTable existing = getEntryById(id);
         existing.setSubject(updated.getSubject());
+        existing.setSubjectRef(referenceResolver.resolveSubject(updated.getSubject()));
         existing.setStartTime(updated.getStartTime());
         existing.setEndTime(updated.getEndTime());
 

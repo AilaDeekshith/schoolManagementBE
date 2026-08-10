@@ -61,6 +61,21 @@ public class FeesController {
         return ResponseEntity.ok(feesService.collectPayment(id, amount, method, transactionId));
     }
 
+    // POST /api/fees/{id}/remind — email a reminder for a single fee record
+    @PostMapping("/{id}/remind")
+    public ResponseEntity<Void> remind(@PathVariable Long id) {
+        feesService.sendFeeReminder(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // POST /api/fees/remind — email reminders for all outstanding fees (optionally by year)
+    @PostMapping("/remind")
+    public ResponseEntity<Map<String, Integer>> remindAll(
+            @RequestParam(required = false) String academicYear) {
+        int sent = feesService.sendReminders(academicYear);
+        return ResponseEntity.ok(Map.of("sent", sent));
+    }
+
     // GET /api/fees/student/{studentId}
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<Fees>> getByStudent(@PathVariable Long studentId) {

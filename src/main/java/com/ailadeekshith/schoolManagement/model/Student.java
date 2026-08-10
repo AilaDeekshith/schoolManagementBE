@@ -1,5 +1,6 @@
 package com.ailadeekshith.schoolManagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -47,7 +48,13 @@ public class Student {
     // ── Academic ──────────────────────────────────────────────
     @NotBlank(message = "Class is required")
     @Column(name = "class_name", nullable = false)
-    private String className;          // e.g. "10-A"
+    private String className;          // e.g. "10-A" (legacy, kept in sync with section)
+
+    // FK backing for className.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "section_id")
+    @JsonIgnore
+    private Section section;
 
     @Column(name = "roll_number")
     private Integer rollNumber;

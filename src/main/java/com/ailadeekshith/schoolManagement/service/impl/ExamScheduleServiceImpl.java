@@ -21,6 +21,7 @@ public class ExamScheduleServiceImpl implements ExamScheduleService {
 
     private final ExamScheduleRepository scheduleRepo;
     private final ExamRepository examRepo;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     @Override
     @Transactional(readOnly = true)
@@ -36,6 +37,8 @@ public class ExamScheduleServiceImpl implements ExamScheduleService {
         ExamSchedule s = ExamSchedule.builder()
                 .exam(exam)
                 .subject(dto.getSubject())
+                .section(referenceResolver.resolveSection(dto.getClassName()))
+                .subjectRef(referenceResolver.resolveSubject(dto.getSubject()))
                 .examDate(dto.getExamDate())
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
@@ -52,6 +55,8 @@ public class ExamScheduleServiceImpl implements ExamScheduleService {
         ExamSchedule s = scheduleRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exam schedule not found: " + id));
         s.setSubject(dto.getSubject());
+        s.setSection(referenceResolver.resolveSection(dto.getClassName()));
+        s.setSubjectRef(referenceResolver.resolveSubject(dto.getSubject()));
         s.setExamDate(dto.getExamDate());
         s.setStartTime(dto.getStartTime());
         s.setEndTime(dto.getEndTime());

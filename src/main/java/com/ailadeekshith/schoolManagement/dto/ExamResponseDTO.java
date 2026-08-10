@@ -21,9 +21,6 @@ public class ExamResponseDTO {
     private String instructions;
     private Exam.ExamStatus status;
 
-    // Flattened examiner info
-    private Long examinerId;
-    private String examinerName;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

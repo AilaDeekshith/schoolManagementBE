@@ -23,6 +23,7 @@ public class AttendanceController {
 
     private final AttendanceRepository attendanceRepo;
     private final StudentRepository studentRepo;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     @PostMapping
     public ResponseEntity<?> saveAttendance(@RequestBody BulkAttendanceRequest req,
@@ -43,6 +44,7 @@ public class AttendanceController {
             record.setStatus(entry.getStatus());
             record.setRemarks(entry.getRemarks());
             record.setMarkedBy(markedBy);
+            if (record.getSection() == null) record.setSection(referenceResolver.resolveSection(req.getClassName()));
             attendanceRepo.save(record);
         }
         return ResponseEntity.ok(Map.of("message", "Attendance saved"));

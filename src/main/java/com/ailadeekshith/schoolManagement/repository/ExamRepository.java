@@ -19,7 +19,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findByExamDateBetween(LocalDate from, LocalDate to);
 
-    List<Exam> findByExaminerId(Long teacherId);
 
     @Query("SELECT e FROM Exam e WHERE e.examDate >= CURRENT_DATE AND e.status != 'COMPLETED' ORDER BY e.examDate ASC")
     List<Exam> findUpcomingExams();

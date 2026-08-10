@@ -1,5 +1,7 @@
 package com.ailadeekshith.schoolManagement.service.impl;
 
+import com.ailadeekshith.schoolManagement.dto.GradeDTO;
+import com.ailadeekshith.schoolManagement.dto.SectionDTO;
 import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.*;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,12 +23,14 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
 
     private final SchoolProfileRepository profileRepo;
     private final ReceiptTemplateRepository receiptTemplateRepo;
-    private final DashboardSlideRepository dashboardSlideRepo;
     private final GradeRepository gradeRepo;
     private final SectionRepository sectionRepo;
     private final SubjectRepository subjectRepo;
     private final FeeStructureRepository feeStructureRepo;
     private final HolidayRepository holidayRepo;
+    private final TeacherRepository teacherRepo;
+    private final ClassRoomRepository classRoomRepo;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     // ── Profile ──────────────────────────────────────────────
     @Override
@@ -131,45 +136,50 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
         });
     }
 
-    // ── Dashboard Slides ─────────────────────────────────────
-    @Override
-    @Transactional(readOnly = true)
-    public List<DashboardSlide> getAllDashboardSlides() {
-        return dashboardSlideRepo.findAllByOrderBySortOrderAscIdAsc();
-    }
-
-    @Override
-    public DashboardSlide createDashboardSlide(DashboardSlide incoming) {
-        incoming.setId(null);
-        if (incoming.getSortOrder() == null) {
-            // Append to the end of the current list.
-            incoming.setSortOrder(dashboardSlideRepo.findAll().size());
-        }
-        return dashboardSlideRepo.save(incoming);
-    }
-
-    @Override
-    public DashboardSlide updateDashboardSlide(Long id, DashboardSlide updated) {
-        DashboardSlide existing = dashboardSlideRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dashboard slide not found: " + id));
-        existing.setImageBase64(updated.getImageBase64());
-        existing.setTagline(updated.getTagline());
-        if (updated.getSortOrder() != null) existing.setSortOrder(updated.getSortOrder());
-        return dashboardSlideRepo.save(existing);
-    }
-
-    @Override
-    public void deleteDashboardSlide(Long id) {
-        DashboardSlide target = dashboardSlideRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dashboard slide not found: " + id));
-        dashboardSlideRepo.delete(target);
-    }
-
     // ── Grades ───────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public List<Grade> getAllGrades() {
         return gradeRepo.findAllByOrderByDisplayOrderAsc();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GradeDTO> getGradeTree() {
+        return gradeRepo.findAllByOrderByDisplayOrderAsc().stream()
+                .map(g -> GradeDTO.builder()
+                        .id(g.getId())
+                        .name(g.getName())
+                        .displayOrder(g.getDisplayOrder())
+                        .sections(g.getSections() == null ? List.of() :
+                                g.getSections().stream().map(this::toSectionDTO).collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private SectionDTO toSectionDTO(Section s) {
+        Teacher t = s.getClassTeacher();
+        ClassRoom r = s.getRoom();
+        return SectionDTO.builder()
+                .id(s.getId())
+                .letter(s.getLetter())
+                .isActive(s.getIsActive())
+                .classTeacherId(t != null ? t.getId() : null)
+                .classTeacherName(t != null ? t.getName() : null)
+                .roomId(r != null ? r.getId() : null)
+                .roomNumber(r != null ? r.getRoomNumber() : null)
+                .build();
+    }
+
+    @Override
+    public SectionDTO updateSection(Long sectionId, Long classTeacherId, Long roomId) {
+        Section section = sectionRepo.findById(sectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Section not found: " + sectionId));
+        section.setClassTeacher(classTeacherId == null ? null : teacherRepo.findById(classTeacherId)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found: " + classTeacherId)));
+        section.setRoom(roomId == null ? null : classRoomRepo.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found: " + roomId)));
+        return toSectionDTO(sectionRepo.save(section));
     }
 
     @Override
@@ -256,6 +266,7 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
 
     @Override
     public FeeStructure createFeeStructure(FeeStructure fs) {
+        fs.setGrade(referenceResolver.resolveGrade(fs.getGradeName()));
         return feeStructureRepo.save(fs);
     }
 
@@ -264,6 +275,7 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
         FeeStructure existing = feeStructureRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fee structure not found: " + id));
         existing.setGradeName(updated.getGradeName());
+        existing.setGrade(referenceResolver.resolveGrade(updated.getGradeName()));
         existing.setFeeCategory(updated.getFeeCategory());
         existing.setAmount(updated.getAmount());
         existing.setAcademicYear(updated.getAcademicYear());

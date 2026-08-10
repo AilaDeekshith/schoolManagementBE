@@ -17,19 +17,15 @@ public interface SchoolConfigService {
     ReceiptTemplate setDefaultReceiptTemplate(Long id);
     void deleteReceiptTemplate(Long id);
 
-    // ── Dashboard Slides (hero carousel) ──────────────────────
-    List<DashboardSlide> getAllDashboardSlides();
-    DashboardSlide createDashboardSlide(DashboardSlide slide);
-    DashboardSlide updateDashboardSlide(Long id, DashboardSlide slide);
-    void deleteDashboardSlide(Long id);
-
     // ── Grades ────────────────────────────────────────────────
     List<Grade> getAllGrades();
+    List<com.ailadeekshith.schoolManagement.dto.GradeDTO> getGradeTree();
     Grade createGrade(Grade grade);
     void deleteGrade(Long id);
 
     // ── Sections ──────────────────────────────────────────────
     Section addSection(Long gradeId, String letter);
+    com.ailadeekshith.schoolManagement.dto.SectionDTO updateSection(Long sectionId, Long classTeacherId, Long roomId);
     void deleteSection(Long sectionId);
 
     // ── Subjects ──────────────────────────────────────────────

@@ -5,6 +5,8 @@ import com.ailadeekshith.schoolManagement.model.Fees;
 import com.ailadeekshith.schoolManagement.model.Student;
 import com.ailadeekshith.schoolManagement.repository.FeesRepository;
 import com.ailadeekshith.schoolManagement.repository.StudentRepository;
+import com.ailadeekshith.schoolManagement.service.EmailService;
+import com.ailadeekshith.schoolManagement.service.EmailTemplates;
 import com.ailadeekshith.schoolManagement.service.FeesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,9 @@ public class FeesServiceImpl implements FeesService {
 
     private final FeesRepository feesRepository;
     private final StudentRepository studentRepository;
+    private final EmailService emailService;
+
+    private static final java.text.DecimalFormat AMOUNT_FMT = new java.text.DecimalFormat("#,##0.00");
 
     @Override
     public Fees createFeeRecord(Fees fees) {
@@ -144,5 +149,48 @@ public class FeesServiceImpl implements FeesService {
     public BigDecimal getTotalOutstanding() {
         BigDecimal total = feesRepository.getTotalOutstanding();
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void sendFeeReminder(Long feeId) {
+        Fees fees = getFeeById(feeId);
+        if (!sendReminderFor(fees)) {
+            log.info("No reminder sent for fee id {} (nothing due or no email on file)", feeId);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int sendReminders(String academicYear) {
+        List<Fees> candidates = (academicYear == null || academicYear.isBlank())
+                ? feesRepository.findAll()
+                : feesRepository.findByAcademicYear(academicYear);
+
+        int sent = 0;
+        for (Fees fees : candidates) {
+            if (sendReminderFor(fees)) sent++;
+        }
+        log.info("Dispatched {} fee reminder email(s){}", sent,
+                (academicYear == null || academicYear.isBlank()) ? "" : " for " + academicYear);
+        return sent;
+    }
+
+    /** Sends a reminder for one fee record if it has an outstanding balance and a valid email. Returns true if dispatched. */
+    private boolean sendReminderFor(Fees fees) {
+        BigDecimal due = fees.getDueAmount() != null ? fees.getDueAmount() : BigDecimal.ZERO;
+        if (due.compareTo(BigDecimal.ZERO) <= 0) return false;
+
+        Student student = fees.getStudent();
+        if (student == null) return false;
+        String email = student.getEmail();
+        if (email == null || !email.contains("@")) return false;
+
+        String dueDate = fees.getDueDate() != null ? fees.getDueDate().toString() : null;
+        EmailTemplates.Email mail = EmailTemplates.feeReminder(
+                student.getName(), student.getClassName(), fees.getAcademicYear(),
+                AMOUNT_FMT.format(due), dueDate);
+        emailService.sendEmail(email, mail.subject(), mail.html(), mail.text());
+        return true;
     }
 }

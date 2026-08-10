@@ -4,6 +4,8 @@ import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.Admission;
 import com.ailadeekshith.schoolManagement.repository.AdmissionRepository;
 import com.ailadeekshith.schoolManagement.service.AdmissionService;
+import com.ailadeekshith.schoolManagement.service.EmailService;
+import com.ailadeekshith.schoolManagement.service.EmailTemplates;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.List;
 public class AdmissionServiceImpl implements AdmissionService {
 
     private final AdmissionRepository admissionRepository;
+    private final EmailService emailService;
 
     @Override
     public Admission createAdmission(Admission admission) {
@@ -67,7 +70,9 @@ public class AdmissionServiceImpl implements AdmissionService {
         Admission admission = getAdmissionById(id);
         admission.setStatus(Admission.AdmissionStatus.APPROVED);
         log.info("Approved admission id: {}", id);
-        return admissionRepository.save(admission);
+        Admission saved = admissionRepository.save(admission);
+        notifyStatusChange(saved);
+        return saved;
     }
 
     @Override
@@ -75,7 +80,9 @@ public class AdmissionServiceImpl implements AdmissionService {
         Admission admission = getAdmissionById(id);
         admission.setStatus(Admission.AdmissionStatus.REJECTED);
         log.info("Rejected admission id: {}", id);
-        return admissionRepository.save(admission);
+        Admission saved = admissionRepository.save(admission);
+        notifyStatusChange(saved);
+        return saved;
     }
 
     @Override
@@ -83,7 +90,41 @@ public class AdmissionServiceImpl implements AdmissionService {
         Admission admission = getAdmissionById(id);
         admission.setStatus(status);
         log.info("Updated admission id: {} to status: {}", id, status);
-        return admissionRepository.save(admission);
+        Admission saved = admissionRepository.save(admission);
+        notifyStatusChange(saved);
+        return saved;
+    }
+
+    /** Emails the guardian about a meaningful status change (approved / rejected / under review). */
+    private void notifyStatusChange(Admission admission) {
+        String email = admission.getGuardianEmail();
+        if (email == null || !email.contains("@")) return;
+
+        String label;
+        String message;
+        switch (admission.getStatus()) {
+            case APPROVED -> {
+                label = "Approved";
+                message = "Congratulations! The admission application has been approved. "
+                        + "Our team will reach out with the next steps.";
+            }
+            case REJECTED -> {
+                label = "Not Accepted";
+                message = "We regret to inform you that the admission application was not accepted at this time. "
+                        + "Please contact the school office for more details.";
+            }
+            case UNDER_REVIEW -> {
+                label = "Under Review";
+                message = "The admission application is now under review. We will notify you once a decision is made.";
+            }
+            default -> {
+                return; // no email for PENDING or other states
+            }
+        }
+
+        EmailTemplates.Email mail = EmailTemplates.admissionStatus(
+                admission.getApplicantName(), admission.getApplyClass(), label, message);
+        emailService.sendEmail(email, mail.subject(), mail.html(), mail.text());
     }
 
     @Override

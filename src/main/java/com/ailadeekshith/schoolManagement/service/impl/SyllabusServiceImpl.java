@@ -26,6 +26,7 @@ public class SyllabusServiceImpl implements SyllabusService {
     private final SyllabusRepository syllabusRepo;
     private final SyllabusTopicRepository topicRepo;
     private final TopicReferenceRepository refRepo;
+    private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
 
     // ── Syllabus CRUD ─────────────────────────────────────────────────
 
@@ -60,6 +61,8 @@ public class SyllabusServiceImpl implements SyllabusService {
                     + " (" + syllabus.getAcademicYear() + ")");
         }
         log.info("Creating syllabus: {} › {}", syllabus.getGradeName(), syllabus.getSubjectName());
+        syllabus.setGrade(referenceResolver.resolveGrade(syllabus.getGradeName()));
+        syllabus.setSubject(referenceResolver.resolveSubject(syllabus.getSubjectName()));
         return syllabusRepo.save(syllabus);
     }
 
@@ -68,6 +71,8 @@ public class SyllabusServiceImpl implements SyllabusService {
         Syllabus existing = getById(id);
         existing.setGradeName(incoming.getGradeName());
         existing.setSubjectName(incoming.getSubjectName());
+        existing.setGrade(referenceResolver.resolveGrade(incoming.getGradeName()));
+        existing.setSubject(referenceResolver.resolveSubject(incoming.getSubjectName()));
         existing.setAcademicYear(incoming.getAcademicYear());
         existing.setDescription(incoming.getDescription());
         existing.setTotalHours(incoming.getTotalHours());
