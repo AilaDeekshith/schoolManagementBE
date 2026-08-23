@@ -22,14 +22,18 @@ public class SyllabusController {
 
     // ── Syllabus CRUD ─────────────────────────────────────────────────
 
-    /** GET /api/syllabi  |  ?grade=Grade+9  |  ?year=2024-25 */
+    /** GET /api/syllabi  |  ?grade=Grade+9  |  ?year=2024-25  |  ?grade=…&year=… */
     @GetMapping
     public ResponseEntity<List<Syllabus>> getAll(
             @RequestParam(required = false) String grade,
             @RequestParam(required = false) String year) {
-        if (grade != null && !grade.isBlank())
+        boolean hasGrade = grade != null && !grade.isBlank();
+        boolean hasYear  = year  != null && !year.isBlank();
+        if (hasGrade && hasYear)
+            return ResponseEntity.ok(syllabusService.getByGradeAndYear(grade, year));
+        if (hasGrade)
             return ResponseEntity.ok(syllabusService.getByGrade(grade));
-        if (year != null && !year.isBlank())
+        if (hasYear)
             return ResponseEntity.ok(syllabusService.getByYear(year));
         return ResponseEntity.ok(syllabusService.getAll());
     }

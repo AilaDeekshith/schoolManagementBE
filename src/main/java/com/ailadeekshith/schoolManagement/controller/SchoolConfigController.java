@@ -153,8 +153,12 @@ public class SchoolConfigController {
     }
 
     // ── Holidays ──────────────────────────────────────────────
+    // GET /api/config/holidays  |  ?academicYear=2024-25 (filtered in the DB)
     @GetMapping("/holidays")
-    public ResponseEntity<List<Holiday>> getHolidays() {
+    public ResponseEntity<List<Holiday>> getHolidays(
+            @RequestParam(required = false) String academicYear) {
+        if (academicYear != null && !academicYear.isBlank())
+            return ResponseEntity.ok(configService.getHolidaysByYear(academicYear));
         return ResponseEntity.ok(configService.getAllHolidays());
     }
 
@@ -172,6 +176,29 @@ public class SchoolConfigController {
     @DeleteMapping("/holidays/{id}")
     public ResponseEntity<Void> deleteHoliday(@PathVariable Long id) {
         configService.deleteHoliday(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Academic Years ────────────────────────────────────────
+    @GetMapping("/academic-years")
+    public ResponseEntity<List<AcademicYear>> getAcademicYears() {
+        return ResponseEntity.ok(configService.getAllAcademicYears());
+    }
+
+    @PostMapping("/academic-years")
+    public ResponseEntity<AcademicYear> createAcademicYear(@RequestBody AcademicYear academicYear) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(configService.createAcademicYear(academicYear));
+    }
+
+    @PutMapping("/academic-years/{id}")
+    public ResponseEntity<AcademicYear> updateAcademicYear(@PathVariable Long id,
+                                                           @RequestBody AcademicYear academicYear) {
+        return ResponseEntity.ok(configService.updateAcademicYear(id, academicYear));
+    }
+
+    @DeleteMapping("/academic-years/{id}")
+    public ResponseEntity<Void> deleteAcademicYear(@PathVariable Long id) {
+        configService.deleteAcademicYear(id);
         return ResponseEntity.noContent().build();
     }
 }

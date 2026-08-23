@@ -226,8 +226,6 @@ public class EntityMapper {
     public Exam toExam(ExamRequestDTO dto) {
         return Exam.builder()
                 .name(dto.getName())
-                .subject(dto.getSubject())
-                .className(dto.getClassName())
                 .examDate(dto.getExamDate())
                 .maxMarks(dto.getMaxMarks())
                 .duration(dto.getDuration())
@@ -239,8 +237,6 @@ public class EntityMapper {
         ExamResponseDTO.ExamResponseDTOBuilder builder = ExamResponseDTO.builder()
                 .id(e.getId())
                 .name(e.getName())
-                .subject(e.getSubject())
-                .className(e.getClassName())
                 .examDate(e.getExamDate())
                 .maxMarks(e.getMaxMarks())
                 .duration(e.getDuration())

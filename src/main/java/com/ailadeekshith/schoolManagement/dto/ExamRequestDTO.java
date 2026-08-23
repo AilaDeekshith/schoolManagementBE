@@ -10,11 +10,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class ExamRequestDTO {
-
-    @NotBlank(message = "Exam name is required")
+    
     private String name;
 
-    @NotBlank(message = "Subject is required")
     private String subject;
 
     private String className;

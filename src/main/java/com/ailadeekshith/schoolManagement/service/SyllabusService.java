@@ -12,6 +12,7 @@ public interface SyllabusService {
     List<Syllabus> getAll();
     List<Syllabus> getByGrade(String gradeName);
     List<Syllabus> getByYear(String academicYear);
+    List<Syllabus> getByGradeAndYear(String gradeName, String academicYear);
     Syllabus getById(Long id);
     Syllabus create(Syllabus syllabus);
     Syllabus update(Long id, Syllabus syllabus);

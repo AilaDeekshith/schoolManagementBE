@@ -9,6 +9,7 @@ public interface ExamService {
     Exam createExam(Exam exam);
     Exam getExamById(Long id);
     List<Exam> getAllExams();
+    List<Exam> filterExams(String academicYear, Exam.ExamStatus status, String className);
     Exam updateExam(Long id, Exam exam);
     void deleteExam(Long id);
 

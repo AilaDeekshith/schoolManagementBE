@@ -299,7 +299,6 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
                 .id(plan.getId())
                 .examId(exam != null ? exam.getId() : null)
                 .examName(exam != null ? exam.getName() : null)
-                .examSubject(exam != null ? exam.getSubject() : null)
                 .examDate(exam != null ? exam.getExamDate() : null)
                 .roomName(plan.getRoomName())
                 .sessions(sessionRepo.findByPlanIdOrderByExamDateAscStartTimeAsc(plan.getId())

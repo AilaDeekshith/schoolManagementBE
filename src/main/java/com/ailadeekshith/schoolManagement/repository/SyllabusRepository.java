@@ -12,6 +12,8 @@ public interface SyllabusRepository extends JpaRepository<Syllabus, Long> {
 
     List<Syllabus> findByAcademicYearOrderByGradeNameAscSubjectNameAsc(String academicYear);
 
+    List<Syllabus> findByGradeNameAndAcademicYearOrderBySubjectNameAsc(String gradeName, String academicYear);
+
     Optional<Syllabus> findByGradeNameAndSubjectNameAndAcademicYear(
             String gradeName, String subjectName, String academicYear);
 

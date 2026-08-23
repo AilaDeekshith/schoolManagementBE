@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "exams")
@@ -22,29 +24,30 @@ public class Exam {
     @Column(nullable = false)
     private String name;              // e.g. "Unit Test 1"
 
-    @NotBlank(message = "Subject is required")
-    @Column(nullable = false)
-    private String subject;
+    // The subjects this exam covers (e.g. ["Mathematics", "Physics"]).
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "exam_subjects", joinColumns = @JoinColumn(name = "exam_id"))
+    @Column(name = "subject")
+    @Builder.Default
+    private List<String> subjects = new ArrayList<>();
 
+    // The classes this exam is conducted for (e.g. ["10-A", "10-B"]).
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "exam_classes", joinColumns = @JoinColumn(name = "exam_id"))
     @Column(name = "class_name")
-    private String className;         // "All" or specific class
+    @Builder.Default
+    private List<String> classes = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private Section section;
+    // The academic year this exam belongs to (e.g. "2024-25").
+    @Column(name = "academic_year")
+    private String academicYear;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private Subject subjectRef;
-
-    @NotNull(message = "Exam date is required")
-    @Column(name = "exam_date", nullable = false)
+    // Optional overall exam date; per-paper dates live in the exam timetable.
+    @Column(name = "exam_date")
     private LocalDate examDate;
 
-    @NotNull(message = "Maximum marks are required")
-    @Column(name = "max_marks", nullable = false)
+    // Optional default max marks; per-paper marks live in the exam timetable.
+    @Column(name = "max_marks")
     private Integer maxMarks;
 
     private String duration;          // e.g. "3 hours"

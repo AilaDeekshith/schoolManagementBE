@@ -24,8 +24,6 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public Exam createExam(Exam exam) {
         log.info("Scheduling exam: {}", exam.getName());
-        exam.setSection(referenceResolver.resolveSection(exam.getClassName()));
-        exam.setSubjectRef(referenceResolver.resolveSubject(exam.getSubject()));
         return examRepository.save(exam);
     }
 
@@ -43,13 +41,20 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Exam> filterExams(String academicYear, Exam.ExamStatus status, String className) {
+        String ay = (academicYear == null || academicYear.isBlank()) ? null : academicYear;
+        String cn = (className == null || className.isBlank()) ? null : className;
+        return examRepository.filterExams(ay, status, cn);
+    }
+
+    @Override
     public Exam updateExam(Long id, Exam updated) {
         Exam existing = getExamById(id);
         existing.setName(updated.getName());
-        existing.setSubject(updated.getSubject());
-        existing.setClassName(updated.getClassName());
-        existing.setSection(referenceResolver.resolveSection(updated.getClassName()));
-        existing.setSubjectRef(referenceResolver.resolveSubject(updated.getSubject()));
+        existing.setSubjects(updated.getSubjects());
+        existing.setClasses(updated.getClasses());
+        existing.setAcademicYear(updated.getAcademicYear());
         existing.setExamDate(updated.getExamDate());
         existing.setMaxMarks(updated.getMaxMarks());
         existing.setDuration(updated.getDuration());

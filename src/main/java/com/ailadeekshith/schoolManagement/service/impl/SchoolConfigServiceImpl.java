@@ -28,6 +28,7 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
     private final SubjectRepository subjectRepo;
     private final FeeStructureRepository feeStructureRepo;
     private final HolidayRepository holidayRepo;
+    private final AcademicYearRepository academicYearRepo;
     private final TeacherRepository teacherRepo;
     private final ClassRoomRepository classRoomRepo;
     private final com.ailadeekshith.schoolManagement.service.ReferenceResolver referenceResolver;
@@ -300,6 +301,12 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Holiday> getHolidaysByYear(String academicYear) {
+        return holidayRepo.findByAcademicYearOrderByDateAsc(academicYear);
+    }
+
+    @Override
     public Holiday createHoliday(Holiday holiday) {
         log.info("holiday");
         return holidayRepo.save(holiday);
@@ -324,5 +331,62 @@ public class SchoolConfigServiceImpl implements SchoolConfigService {
         holidayRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Holiday not found: " + id));
         holidayRepo.deleteById(id);
+    }
+
+    // ── Academic Years ───────────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<AcademicYear> getAllAcademicYears() {
+        return academicYearRepo.findAllByOrderByYearDesc();
+    }
+
+    @Override
+    public AcademicYear createAcademicYear(AcademicYear ay) {
+        String year = ay.getYear() == null ? null : ay.getYear().trim();
+        if (year == null || year.isEmpty()) {
+            throw new IllegalArgumentException("Academic year is required");
+        }
+        if (academicYearRepo.existsByYear(year)) {
+            throw new DuplicateResourceException("Academic year already exists: " + year);
+        }
+        ay.setYear(year);
+        if (ay.isActive()) clearActiveExcept(null);
+        return academicYearRepo.save(ay);
+    }
+
+    @Override
+    public AcademicYear updateAcademicYear(Long id, AcademicYear updated) {
+        AcademicYear existing = academicYearRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Academic year not found: " + id));
+        String newYear = updated.getYear() == null ? existing.getYear() : updated.getYear().trim();
+        if (newYear == null || newYear.isEmpty()) {
+            throw new IllegalArgumentException("Academic year is required");
+        }
+        if (!existing.getYear().equalsIgnoreCase(newYear) && academicYearRepo.existsByYear(newYear)) {
+            throw new DuplicateResourceException("Academic year already exists: " + newYear);
+        }
+        existing.setYear(newYear);
+        existing.setStartDate(updated.getStartDate());
+        existing.setEndDate(updated.getEndDate());
+        if (updated.isActive()) clearActiveExcept(id);
+        existing.setActive(updated.isActive());
+        return academicYearRepo.save(existing);
+    }
+
+    @Override
+    public void deleteAcademicYear(Long id) {
+        academicYearRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Academic year not found: " + id));
+        academicYearRepo.deleteById(id);
+    }
+
+    // Ensures at most one academic year is flagged active.
+    private void clearActiveExcept(Long keepId) {
+        academicYearRepo.findAll().forEach(a -> {
+            if (a.isActive() && (keepId == null || !a.getId().equals(keepId))) {
+                a.setActive(false);
+                academicYearRepo.save(a);
+            }
+        });
     }
 }

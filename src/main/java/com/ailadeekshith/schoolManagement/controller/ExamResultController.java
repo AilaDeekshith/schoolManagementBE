@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/exam-results")
@@ -42,10 +41,11 @@ public class ExamResultController {
                     .orElseGet(() -> ExamResult.builder()
                             .exam(exam).student(student).subject(req.getSubject()).build());
 
+            Integer maxMarks = exam.getMaxMarks();
             result.setMarksObtained(entry.getMarksObtained());
-            result.setMaxMarks(exam.getMaxMarks());
-            result.setGrade(entry.getMarksObtained() != null
-                    ? grade(entry.getMarksObtained(), exam.getMaxMarks()) : null);
+            result.setMaxMarks(maxMarks);
+            result.setGrade(entry.getMarksObtained() != null && maxMarks != null
+                    ? grade(entry.getMarksObtained(), maxMarks) : null);
             result.setRemarks(entry.getRemarks());
             if (result.getSubjectRef() == null) result.setSubjectRef(referenceResolver.resolveSubject(req.getSubject()));
             saved.add(resultRepo.save(result));

@@ -26,10 +26,14 @@ public class ExamController {
         return ResponseEntity.status(HttpStatus.CREATED).body(examService.createExam(exam));
     }
 
-    // GET /api/exams
+    // GET /api/exams?academicYear=&status=&className=
+    // All params optional; filtering runs in the database.
     @GetMapping
-    public ResponseEntity<List<Exam>> getAllExams() {
-        return ResponseEntity.ok(examService.getAllExams());
+    public ResponseEntity<List<Exam>> getAllExams(
+            @RequestParam(required = false) String academicYear,
+            @RequestParam(required = false) Exam.ExamStatus status,
+            @RequestParam(required = false) String className) {
+        return ResponseEntity.ok(examService.filterExams(academicYear, status, className));
     }
 
     // GET /api/exams/{id}

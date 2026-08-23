@@ -42,7 +42,14 @@ public interface SchoolConfigService {
 
     // ── Holidays ──────────────────────────────────────────────
     List<Holiday> getAllHolidays();
+    List<Holiday> getHolidaysByYear(String academicYear);
     Holiday createHoliday(Holiday holiday);
     Holiday updateHoliday(Long id, Holiday holiday);
     void deleteHoliday(Long id);
+
+    // ── Academic Years ────────────────────────────────────────
+    List<AcademicYear> getAllAcademicYears();
+    AcademicYear createAcademicYear(AcademicYear academicYear);
+    AcademicYear updateAcademicYear(Long id, AcademicYear academicYear);
+    void deleteAcademicYear(Long id);
 }

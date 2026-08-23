@@ -46,6 +46,11 @@ public class SyllabusServiceImpl implements SyllabusService {
     }
 
     @Override @Transactional(readOnly = true)
+    public List<Syllabus> getByGradeAndYear(String gradeName, String academicYear) {
+        return syllabusRepo.findByGradeNameAndAcademicYearOrderBySubjectNameAsc(gradeName, academicYear);
+    }
+
+    @Override @Transactional(readOnly = true)
     public Syllabus getById(Long id) {
         return syllabusRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Syllabus not found: " + id));

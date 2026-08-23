@@ -49,8 +49,6 @@ public class SoftLinkBackfill implements ApplicationRunner {
         });
         examRepo.findAll().forEach(e -> {
             boolean changed = false;
-            if (e.getSection() == null) { var sec = resolver.resolveSection(e.getClassName()); if (sec != null) { e.setSection(sec); changed = true; } }
-            if (e.getSubjectRef() == null) { var sub = resolver.resolveSubject(e.getSubject()); if (sub != null) { e.setSubjectRef(sub); changed = true; } }
             if (changed) { examRepo.save(e); n[0]++; }
         });
         examScheduleRepo.findAll().forEach(e -> {
