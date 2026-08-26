@@ -42,7 +42,7 @@ public class Student {
     private String religion;
 
     @Email(message = "Invalid email format")
-    @Column(unique = true)
+    // Not unique: students often share a parent's email address.
     private String email;
 
     // ── Academic ──────────────────────────────────────────────

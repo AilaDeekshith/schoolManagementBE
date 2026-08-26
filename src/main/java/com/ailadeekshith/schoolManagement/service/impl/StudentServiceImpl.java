@@ -1,9 +1,7 @@
 package com.ailadeekshith.schoolManagement.service.impl;
 
-import com.ailadeekshith.schoolManagement.exception.DuplicateResourceException;
 import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.Fees;
-import com.ailadeekshith.schoolManagement.model.FeeStructure;
 import com.ailadeekshith.schoolManagement.model.SchoolProfile;
 import com.ailadeekshith.schoolManagement.model.Student;
 import com.ailadeekshith.schoolManagement.model.StudentUser;
@@ -46,9 +44,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Student createStudent(Student student) {
         log.info("Creating student: {}", student.getName());
-        if (student.getEmail() != null && studentRepository.existsByEmail(student.getEmail())) {
-            throw new DuplicateResourceException("Email already registered: " + student.getEmail());
-        }
+        // Email is intentionally not unique — siblings often share a parent's email address.
         // Generate the unique student identifier from the admission date + time.
         student.setStudentCode(generateStudentCode(student.getAdmissionDate()));
         student.setSection(referenceResolver.resolveSection(student.getClassName()));
