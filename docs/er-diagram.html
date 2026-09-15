@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>School Management — ER Diagram</title>
+<style>
+  body { margin: 0; background: #0f1117; color: #e6e6e6; font-family: system-ui, sans-serif; }
+  header { padding: 16px 24px; border-bottom: 1px solid #23262f; }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #9aa0ac; }
+  .wrap { padding: 16px; overflow: auto; }
+  .mermaid { background: #0f1117; }
+</style>
+</head>
+<body>
+<header>
+  <h1>School Management — Database ER Diagram</h1>
+  <p>30 entities · package <code>com.ailadeekshith.schoolManagement.model</code> · PostgreSQL (Hibernate ddl-auto=update)</p>
+</header>
+<div class="wrap">
+<pre class="mermaid">
+erDiagram
+
+  %% ---------- People / Academics core ----------
+  GRADE ||--o{ SECTION : "has"
+  GRADE ||--o{ FEE_STRUCTURE : "priced by"
+  GRADE ||--o{ SYLLABUS : "for"
+
+  SECTION }o--|| GRADE : "belongs to"
+  SECTION }o--o| TEACHER : "class teacher"
+  SECTION }o--o| CLASSES : "room"
+
+  STUDENT }o--o| SECTION : "enrolled in"
+
+  ADMISSION |o--o| STUDENT : "becomes"
+  STUDENT_USER ||--|| STUDENT : "login for"
+
+  APP_USER }o--o| TEACHER : "linked to"
+  USER_PERMISSION }o--|| APP_USER : "grants"
+
+  CLASSES }o--o| TEACHER : "class teacher"
+
+  %% ---------- Attendance ----------
+  ATTENDANCE }o--|| STUDENT : "of"
+  ATTENDANCE }o--o| SECTION : "in"
+
+  %% ---------- Fees ----------
+  FEES }o--|| STUDENT : "billed to"
+  FEE_STRUCTURE }o--o| GRADE : "rate for"
+
+  %% ---------- Exams ----------
+  EXAM ||--o{ EXAM_SUBJECTS : "covers"
+  EXAM ||--o{ EXAM_CLASSES : "for"
+  EXAM ||--o{ EXAM_RESULT : "produces"
+  EXAM ||--o{ EXAM_SCHEDULE : "scheduled as"
+  EXAM ||--o{ EXAM_SEATING_PLAN : "seated by"
+
+  EXAM_RESULT }o--|| STUDENT : "scored by"
+  EXAM_RESULT }o--o| SUBJECT : "in"
+
+  EXAM_SCHEDULE }o--o| SECTION : "for"
+  EXAM_SCHEDULE }o--o| SUBJECT : "of"
+
+  EXAM_SEATING_PLAN ||--o{ EXAM_SESSION : "has"
+  EXAM_SEATING_PLAN ||--o{ EXAM_SEAT : "contains"
+  EXAM_SESSION }o--o| TEACHER : "invigilated by"
+  EXAM_SEAT }o--o| STUDENT : "occupied by"
+
+  SEAT_ASSIGNMENT }o--|| CLASSES : "in"
+  SEAT_ASSIGNMENT }o--o| STUDENT : "for"
+
+  %% ---------- Timetable ----------
+  TIMETABLE }o--o| SECTION : "for"
+  TIMETABLE }o--o| SUBJECT : "of"
+  TIMETABLE }o--o| TEACHER : "taught by"
+  TIMETABLE_PERIOD }o--o| SECTION : "for"
+
+  %% ---------- Syllabus ----------
+  SYLLABUS }o--o| SUBJECT : "in"
+  SYLLABUS ||--o{ SYLLABUS_TOPIC : "has"
+  SYLLABUS_TOPIC ||--o{ TOPIC_REFERENCE : "has"
+
+  %% ================= Entity attributes =================
+
+  STUDENT {
+    Long id PK
+    String name
+    String student_code UK
+    String class_name
+    Long section_id FK
+    String email
+    Integer roll_number
+    String guardian_name
+    String contact_number
+    enum status
+    enum fee_status
+  }
+
+  GRADE {
+    Long id PK
+    String name UK
+    Integer display_order
+  }
+
+  SECTION {
+    Long id PK
+    String letter
+    Long grade_id FK
+    Long class_teacher_id FK
+    Long room_id FK
+    Boolean is_active
+  }
+
+  CLASSES {
+    Long id PK
+    String class_name UK
+    String room_number
+    Integer max_capacity
+    Integer current_strength
+    String class_monitor
+    Long class_teacher_id FK
+  }
+
+  TEACHER {
+    Long id PK
+    String name
+    String subject
+    String email UK
+    String assigned_classes
+    enum status
+  }
+
+  APP_USER {
+    Long id PK
+    String name
+    String email UK
+    String username UK
+    String password
+    enum role
+    enum status
+    Long teacher_id FK
+  }
+
+  USER_PERMISSION {
+    Long id PK
+    Long user_id FK
+    String module
+    boolean can_read
+    boolean can_write
+  }
+
+  STUDENT_USER {
+    Long id PK
+    Long student_id FK
+    String username UK
+    String password
+    enum status
+  }
+
+  ADMISSION {
+    Long id PK
+    String applicant_name
+    String apply_class
+    String guardian_name
+    String contact_number
+    enum status
+    Long student_id FK
+  }
+
+  ATTENDANCE {
+    Long id PK
+    Long student_id FK
+    String class_name
+    Long section_id FK
+    LocalDate date
+    enum status
+  }
+
+  FEES {
+    Long id PK
+    Long student_id FK
+    BigDecimal total_amount
+    BigDecimal paid_amount
+    BigDecimal due_amount
+    String academic_year
+    enum fee_type
+    enum fee_status
+    enum payment_method
+  }
+
+  FEE_STRUCTURE {
+    Long id PK
+    String grade_name
+    Long grade_id FK
+    enum fee_category
+    BigDecimal amount
+    String academic_year
+    enum frequency
+  }
+
+  SUBJECT {
+    Long id PK
+    String name UK
+    String code
+    enum type
+    Boolean is_active
+  }
+
+  EXAM {
+    Long id PK
+    String name
+    String academic_year
+    LocalDate exam_date
+    Integer max_marks
+    enum status
+  }
+
+  EXAM_SUBJECTS {
+    Long exam_id FK
+    String subject
+  }
+
+  EXAM_CLASSES {
+    Long exam_id FK
+    String class_name
+  }
+
+  EXAM_RESULT {
+    Long id PK
+    Long exam_id FK
+    Long student_id FK
+    String subject
+    Long subject_id FK
+    Double marks_obtained
+    Integer max_marks
+    String grade
+  }
+
+  EXAM_SCHEDULE {
+    Long id PK
+    Long exam_id FK
+    String subject
+    LocalDate exam_date
+    String class_name
+    Long section_id FK
+    Long subject_id FK
+    String room
+  }
+
+  EXAM_SEATING_PLAN {
+    Long id PK
+    Long exam_id FK
+    String room_name
+    Integer rows_count
+    Integer cols_count
+    String class_names
+  }
+
+  EXAM_SESSION {
+    Long id PK
+    Long plan_id FK
+    LocalDate exam_date
+    String start_time
+    String end_time
+    Long invigilator_id FK
+  }
+
+  EXAM_SEAT {
+    Long id PK
+    Long plan_id FK
+    Integer row_num
+    Integer col_num
+    Integer seat_index
+    Long student_id FK
+  }
+
+  SEAT_ASSIGNMENT {
+    Long id PK
+    Long class_room_id FK
+    Integer row_num
+    Integer col_num
+    Integer seat_index
+    Long student_id FK
+  }
+
+  TIMETABLE {
+    Long id PK
+    String class_name
+    Long section_id FK
+    Long subject_id FK
+    enum day_of_week
+    Integer period_number
+    String subject
+    Long teacher_id FK
+  }
+
+  TIMETABLE_PERIOD {
+    Long id PK
+    String class_name
+    Long section_id FK
+    Integer period_number
+    String period_label
+    LocalTime start_time
+    LocalTime end_time
+    Boolean is_break
+  }
+
+  SYLLABUS {
+    Long id PK
+    String grade_name
+    Long grade_id FK
+    Long subject_id FK
+    String subject_name
+    String academic_year
+    Integer total_hours
+  }
+
+  SYLLABUS_TOPIC {
+    Long id PK
+    Long syllabus_id FK
+    String title
+    Integer order_index
+    enum status
+    Boolean is_key_topic
+  }
+
+  TOPIC_REFERENCE {
+    Long id PK
+    Long topic_id FK
+    String title
+    String url
+    enum type
+  }
+
+  %% ---------- Standalone / config tables ----------
+  ACADEMIC_YEAR {
+    Long id PK
+    String year UK
+    LocalDate start_date
+    LocalDate end_date
+    boolean active
+  }
+
+  HOLIDAY {
+    Long id PK
+    String name
+    LocalDate date
+    LocalDate end_date
+    enum type
+    String academic_year
+  }
+
+  NOTICE {
+    Long id PK
+    String title
+    String content
+    String image_base64
+  }
+
+  SCHOOL_PROFILE {
+    Long id PK
+    String school_name
+    String academic_year
+    String affiliation_board
+    String school_type
+  }
+
+  RECEIPT_TEMPLATE {
+    Long id PK
+    String name
+    Boolean is_default
+    String title
+    String accent_color
+  }
+</pre>
+</div>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "dark", er: { layoutDirection: "TB" } });
+</script>
+</body>
+</html>
