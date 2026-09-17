@@ -36,3 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 .DS_Store
+gradle/wrapper/.tmp
+gradle/wrapper/caches
+gradle/wrapper/daemon
+gradle/wrapper/native
+gradle/wrapper/wrapper

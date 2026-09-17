@@ -20,6 +20,7 @@ public class StudentUser {
     // One login per student.
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false, unique = true)
+    @ToString.Exclude
     private Student student;
 
     @Column(unique = true, nullable = false)

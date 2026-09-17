@@ -54,6 +54,7 @@ public class Student {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "section_id")
     @JsonIgnore
+    @ToString.Exclude
     private Section section;
 
     @Column(name = "roll_number")
