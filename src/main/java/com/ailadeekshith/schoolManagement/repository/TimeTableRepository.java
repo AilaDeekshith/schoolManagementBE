@@ -15,7 +15,11 @@ public interface TimeTableRepository extends JpaRepository<TimeTable, Long> {
 
     List<TimeTable> findByDayOfWeek(TimeTable.DayOfWeek dayOfWeek);
 
-    List<TimeTable> findByTeacherId(Long teacherId);
+    // Note: TimeTable also has a @Transient "teacherId" field (for JSON input), so
+    // the derived query must use "Teacher_Id" to force traversal of the teacher
+    // association's id — "findByTeacherId" resolves to the transient field instead
+    // and fails at query-parse time with UnknownPathException.
+    List<TimeTable> findByTeacher_Id(Long teacherId);
 
     List<TimeTable> findByClassNameAndDayOfWeek(String className, TimeTable.DayOfWeek dayOfWeek);
 

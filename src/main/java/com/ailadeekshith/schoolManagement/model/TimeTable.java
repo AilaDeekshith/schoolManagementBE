@@ -94,5 +94,5 @@ public class TimeTable {
     }
 
     // ── Enum ──────────────────────────────────────────────────
-    public enum DayOfWeek { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY }
+    public enum DayOfWeek { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY }
 }

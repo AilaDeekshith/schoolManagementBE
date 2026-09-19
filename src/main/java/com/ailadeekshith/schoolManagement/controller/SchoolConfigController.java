@@ -30,13 +30,27 @@ public class SchoolConfigController {
         return ResponseEntity.ok(configService.saveProfile(profile));
     }
 
-    // ── Public branding (name + logo only, no auth required) ───
+    // ── Public branding (identity + contact info, no auth required) ───
+    // Deliberately excludes nothing sensitive here — this is the same info a
+    // visitor would find on the school's own website — so both the student and
+    // teacher mobile apps can show it pre-login and on their profile screens
+    // regardless of which auth realm (staff vs student) their session uses.
     @GetMapping("/branding")
-    public ResponseEntity<Map<String, String>> getBranding() {
+    public ResponseEntity<Map<String, Object>> getBranding() {
         SchoolProfile profile = configService.getProfile();
-        Map<String, String> branding = new HashMap<>();
+        Map<String, Object> branding = new HashMap<>();
         branding.put("schoolName", profile.getSchoolName());
         branding.put("logoBase64", profile.getLogoBase64());
+        branding.put("address", profile.getAddress());
+        branding.put("phone", profile.getPhone());
+        branding.put("email", profile.getEmail());
+        branding.put("website", profile.getWebsite());
+        branding.put("principalName", profile.getPrincipalName());
+        branding.put("academicYear", profile.getAcademicYear());
+        branding.put("establishedYear", profile.getEstablishedYear());
+        branding.put("affiliationBoard", profile.getAffiliationBoard());
+        branding.put("schoolType", profile.getSchoolType());
+        branding.put("dashboardTagline", profile.getDashboardTagline());
         return ResponseEntity.ok(branding);
     }
 

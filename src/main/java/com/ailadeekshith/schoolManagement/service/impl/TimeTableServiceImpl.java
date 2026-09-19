@@ -120,7 +120,7 @@ public class TimeTableServiceImpl implements TimeTableService {
     @Override
     @Transactional(readOnly = true)
     public List<TimeTable> getScheduleByTeacher(Long teacherId) {
-        return timeTableRepository.findByTeacherId(teacherId);
+        return timeTableRepository.findByTeacher_Id(teacherId);
     }
 
     @Override

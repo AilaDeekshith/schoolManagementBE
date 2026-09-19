@@ -1,5 +1,6 @@
 package com.ailadeekshith.schoolManagement.controller;
 
+import com.ailadeekshith.schoolManagement.exception.BadRequestException;
 import com.ailadeekshith.schoolManagement.model.Exam;
 import com.ailadeekshith.schoolManagement.model.ExamResult;
 import com.ailadeekshith.schoolManagement.model.Student;
@@ -30,6 +31,8 @@ public class ExamResultController {
     public ResponseEntity<List<ExamResult>> saveBulk(@RequestBody BulkRequest req) {
         Exam exam = examRepo.findById(req.getExamId())
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
+
+        validateMarks(req.getEntries(), exam.getMaxMarks());
 
         List<ExamResult> saved = new ArrayList<>();
         for (ResultEntry entry : req.getEntries()) {
@@ -84,6 +87,23 @@ public class ExamResultController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         resultRepo.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Validation ────────────────────────────────────────────
+    // Rejects the whole batch (before anything is saved) if any entry falls
+    // outside [0, maxMarks] — maxMarks is optional on an exam, so entries are
+    // only bounds-checked when the exam actually defines one.
+    private static void validateMarks(List<ResultEntry> entries, Integer maxMarks) {
+        for (ResultEntry entry : entries) {
+            Double marks = entry.getMarksObtained();
+            if (marks == null) continue;
+            if (marks < 0) {
+                throw new BadRequestException("Marks cannot be negative");
+            }
+            if (maxMarks != null && marks > maxMarks) {
+                throw new BadRequestException("Marks cannot exceed the exam maximum of " + maxMarks);
+            }
+        }
     }
 
     // ── Grade helper ─────────────────────────────────────────
