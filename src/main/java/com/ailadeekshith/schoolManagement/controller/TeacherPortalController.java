@@ -7,6 +7,7 @@ import com.ailadeekshith.schoolManagement.dto.SeatAssignmentDTO;
 import com.ailadeekshith.schoolManagement.exception.BadRequestException;
 import com.ailadeekshith.schoolManagement.model.*;
 import com.ailadeekshith.schoolManagement.repository.*;
+import com.ailadeekshith.schoolManagement.service.ClassDiaryService;
 import com.ailadeekshith.schoolManagement.service.ExamSeatingService;
 import com.ailadeekshith.schoolManagement.service.ReferenceResolver;
 import com.ailadeekshith.schoolManagement.service.SeatAssignmentService;
@@ -57,6 +58,7 @@ public class TeacherPortalController {
     private final ClassRoomRepository classRoomRepo;
     private final SeatAssignmentService seatAssignmentService;
     private final ExamSeatingService examSeatingService;
+    private final ClassDiaryService classDiaryService;
 
     // ── Access helpers ───────────────────────────────────────────────
 
@@ -365,6 +367,59 @@ public class TeacherPortalController {
                 .collect(Collectors.toList());
     }
 
+    // ── Class diary (end-of-period summary) ───────────────────────────
+
+    /** Entries for one assigned class — a specific date, or a range (defaults to the last 30 days). */
+    @GetMapping("/class-diary")
+    public ResponseEntity<List<ClassDiaryEntry>> getClassDiary(
+            Authentication auth, @RequestParam String className,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        Teacher teacher = getTeacher(auth);
+        requireClassAccess(teacher, className);
+        if (date != null) {
+            return ResponseEntity.ok(classDiaryService.getByClassAndDate(className, date));
+        }
+        LocalDate f = from != null ? from : LocalDate.now().minusDays(30);
+        LocalDate t = to != null ? to : LocalDate.now();
+        return ResponseEntity.ok(classDiaryService.getByClassAndDateRange(className, f, t));
+    }
+
+    /** Every entry this teacher has personally logged, most recent first. */
+    @GetMapping("/class-diary/mine")
+    public ResponseEntity<List<ClassDiaryEntry>> getMyClassDiary(Authentication auth) {
+        Teacher teacher = getTeacher(auth);
+        return ResponseEntity.ok(classDiaryService.getByTeacher(teacher.getId()));
+    }
+
+    /** Log (or edit) the summary for one of the teacher's own periods on a given date. */
+    @PutMapping("/class-diary/timetable/{timetableId}")
+    public ResponseEntity<ClassDiaryEntry> saveClassDiary(
+            Authentication auth, @PathVariable Long timetableId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestBody ClassDiarySaveRequest req) {
+        Teacher teacher = getTeacher(auth);
+        requireTimetableOwnership(teacher, timetableId);
+
+        ClassDiaryEntry data = ClassDiaryEntry.builder()
+                .topicCovered(req.getTopicCovered())
+                .subTopics(req.getSubTopics())
+                .homework(req.getHomework())
+                .instructionsForNext(req.getInstructionsForNext())
+                .build();
+        return ResponseEntity.ok(classDiaryService.save(timetableId, date, teacher, data));
+    }
+
+    /** A teacher may only log entries for their own periods, in one of their assigned classes. */
+    private void requireTimetableOwnership(Teacher teacher, Long timetableId) {
+        TimeTable slot = timeTableService.getEntryById(timetableId);
+        requireClassAccess(teacher, slot.getClassName());
+        if (slot.getTeacher() == null || !slot.getTeacher().getId().equals(teacher.getId())) {
+            throw new AccessDeniedException("This period isn't assigned to you");
+        }
+    }
+
     // ── Classroom seating ────────────────────────────────────────────
 
     private ClassRoom getClassRoom(String className) {
@@ -449,6 +504,14 @@ public class TeacherPortalController {
     @Data
     public static class SeatAssignRequestBody {
         private Long studentId;
+    }
+
+    @Data
+    public static class ClassDiarySaveRequest {
+        private String topicCovered;
+        private String subTopics;
+        private String homework;
+        private String instructionsForNext;
     }
 
     @Data

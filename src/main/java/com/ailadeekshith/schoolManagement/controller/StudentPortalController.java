@@ -2,6 +2,7 @@ package com.ailadeekshith.schoolManagement.controller;
 
 import com.ailadeekshith.schoolManagement.model.*;
 import com.ailadeekshith.schoolManagement.repository.*;
+import com.ailadeekshith.schoolManagement.service.ClassDiaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,6 +23,7 @@ public class StudentPortalController {
     private final TimeTableRepository timetableRepo;
     private final ExamRepository examRepo;
     private final FeesRepository feesRepo;
+    private final ClassDiaryService classDiaryService;
 
     private StudentUser getStudentUser(Authentication auth) {
         return (StudentUser) auth.getPrincipal();
@@ -77,5 +79,21 @@ public class StudentPortalController {
     public ResponseEntity<List<Fees>> getFees(Authentication auth) {
         Long studentId = getStudentUser(auth).getStudent().getId();
         return ResponseEntity.ok(feesRepo.findByStudentId(studentId));
+    }
+
+    /** Class diary entries for the student's own class — a specific date, or a range (defaults to the last 7 days). */
+    @GetMapping("/class-diary")
+    public ResponseEntity<List<ClassDiaryEntry>> getClassDiary(
+            Authentication auth,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        String className = getStudentUser(auth).getStudent().getClassName();
+        if (date != null) {
+            return ResponseEntity.ok(classDiaryService.getByClassAndDate(className, LocalDate.parse(date)));
+        }
+        LocalDate fromDate = from != null ? LocalDate.parse(from) : LocalDate.now().minusDays(7);
+        LocalDate toDate   = to   != null ? LocalDate.parse(to)   : LocalDate.now();
+        return ResponseEntity.ok(classDiaryService.getByClassAndDateRange(className, fromDate, toDate));
     }
 }
