@@ -323,6 +323,7 @@ public class ExamSeatingServiceImpl implements ExamSeatingService {
                 .studentName(st != null ? st.getName() : null)
                 .studentClass(st != null ? st.getClassName() : null)
                 .rollNumber(st != null ? st.getRollNumber() : null)
+                .studentPhoto(st != null ? st.getPhotoBase64() : null)
                 .build();
     }
 }

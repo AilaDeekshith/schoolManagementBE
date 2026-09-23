@@ -15,4 +15,5 @@ public class ExamSeatDTO {
     private String studentName;
     private String studentClass;
     private Integer rollNumber;
+    private String studentPhoto;
 }

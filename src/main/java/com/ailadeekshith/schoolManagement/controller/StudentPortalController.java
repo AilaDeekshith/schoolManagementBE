@@ -1,14 +1,17 @@
 package com.ailadeekshith.schoolManagement.controller;
 
+import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.*;
 import com.ailadeekshith.schoolManagement.repository.*;
 import com.ailadeekshith.schoolManagement.service.ClassDiaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,7 @@ public class StudentPortalController {
     private final ExamRepository examRepo;
     private final FeesRepository feesRepo;
     private final ClassDiaryService classDiaryService;
+    private final TeacherRepository teacherRepo;
 
     private StudentUser getStudentUser(Authentication auth) {
         return (StudentUser) auth.getPrincipal();
@@ -95,5 +99,21 @@ public class StudentPortalController {
         LocalDate fromDate = from != null ? LocalDate.parse(from) : LocalDate.now().minusDays(7);
         LocalDate toDate   = to   != null ? LocalDate.parse(to)   : LocalDate.now();
         return ResponseEntity.ok(classDiaryService.getByClassAndDateRange(className, fromDate, toDate));
+    }
+
+    /** Full profile of a teacher who teaches the calling student's own class. */
+    @GetMapping("/teachers/{id}")
+    public ResponseEntity<Teacher> getTeacher(Authentication auth, @PathVariable Long id) {
+        String className = getStudentUser(auth).getStudent().getClassName();
+        Teacher teacher = teacherRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found: " + id));
+        boolean teachesMyClass = teacher.getAssignedClasses() != null &&
+                Arrays.stream(teacher.getAssignedClasses().split(","))
+                        .map(String::trim)
+                        .anyMatch(className::equals);
+        if (!teachesMyClass) {
+            throw new AccessDeniedException("This teacher does not teach your class");
+        }
+        return ResponseEntity.ok(teacher);
     }
 }

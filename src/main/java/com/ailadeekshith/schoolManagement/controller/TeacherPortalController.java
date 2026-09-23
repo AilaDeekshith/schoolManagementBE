@@ -5,6 +5,7 @@ import com.ailadeekshith.schoolManagement.dto.ExamSeatingPlanDTO;
 import com.ailadeekshith.schoolManagement.dto.LayoutUpdateDTO;
 import com.ailadeekshith.schoolManagement.dto.SeatAssignmentDTO;
 import com.ailadeekshith.schoolManagement.exception.BadRequestException;
+import com.ailadeekshith.schoolManagement.exception.ResourceNotFoundException;
 import com.ailadeekshith.schoolManagement.model.*;
 import com.ailadeekshith.schoolManagement.repository.*;
 import com.ailadeekshith.schoolManagement.service.ClassDiaryService;
@@ -118,6 +119,16 @@ public class TeacherPortalController {
         Teacher teacher = getTeacher(auth);
         requireClassAccess(teacher, className);
         return ResponseEntity.ok(studentService.getStudentsByClass(className));
+    }
+
+    /** Full profile of one student, provided they belong to a class this teacher is assigned to. */
+    @GetMapping("/students/{id}")
+    public ResponseEntity<Student> getStudent(Authentication auth, @PathVariable Long id) {
+        Teacher teacher = getTeacher(auth);
+        Student student = studentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + id));
+        requireClassAccess(teacher, student.getClassName());
+        return ResponseEntity.ok(student);
     }
 
     // ── Attendance ───────────────────────────────────────────────────

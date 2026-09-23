@@ -13,4 +13,5 @@ public class SeatAssignmentDTO {
     private Integer seatIndex;
     private Long studentId;
     private String studentName;
+    private String studentPhoto;
 }

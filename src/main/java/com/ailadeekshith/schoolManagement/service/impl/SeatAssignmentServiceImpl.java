@@ -89,6 +89,7 @@ public class SeatAssignmentServiceImpl implements SeatAssignmentService {
                 .seatIndex(seat.getSeatIndex())
                 .studentId(seat.getStudent() != null ? seat.getStudent().getId() : null)
                 .studentName(seat.getStudent() != null ? seat.getStudent().getName() : null)
+                .studentPhoto(seat.getStudent() != null ? seat.getStudent().getPhotoBase64() : null)
                 .build();
     }
 }
