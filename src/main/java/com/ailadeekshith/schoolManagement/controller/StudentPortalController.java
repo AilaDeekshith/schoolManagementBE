@@ -28,6 +28,8 @@ public class StudentPortalController {
     private final FeesRepository feesRepo;
     private final ClassDiaryService classDiaryService;
     private final TeacherRepository teacherRepo;
+    private final EventRepository eventRepo;
+    private final EventPhotoRepository eventPhotoRepo;
 
     private StudentUser getStudentUser(Authentication auth) {
         return (StudentUser) auth.getPrincipal();
@@ -115,5 +117,21 @@ public class StudentPortalController {
             throw new AccessDeniedException("This teacher does not teach your class");
         }
         return ResponseEntity.ok(teacher);
+    }
+
+    /** Every whole-school event plus any event targeting the calling student's own class. */
+    @GetMapping("/events")
+    public ResponseEntity<List<Event>> getEvents(Authentication auth) {
+        String className = getStudentUser(auth).getStudent().getClassName();
+        return ResponseEntity.ok(eventRepo.findVisibleToClasses(List.of(className)));
+    }
+
+    @GetMapping("/events/{id}/photos")
+    public ResponseEntity<List<EventPhoto>> getEventPhotos(Authentication auth, @PathVariable Long id) {
+        String className = getStudentUser(auth).getStudent().getClassName();
+        Event event = eventRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+        boolean visible = event.getClasses() == null || event.getClasses().isEmpty() || event.getClasses().contains(className);
+        if (!visible) throw new AccessDeniedException("This event isn't for your class");
+        return ResponseEntity.ok(eventPhotoRepo.findByEventIdOrderByIdAsc(id));
     }
 }

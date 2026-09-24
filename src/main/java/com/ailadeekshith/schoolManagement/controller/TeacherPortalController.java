@@ -60,6 +60,8 @@ public class TeacherPortalController {
     private final SeatAssignmentService seatAssignmentService;
     private final ExamSeatingService examSeatingService;
     private final ClassDiaryService classDiaryService;
+    private final EventRepository eventRepo;
+    private final EventPhotoRepository eventPhotoRepo;
 
     // ── Access helpers ───────────────────────────────────────────────
 
@@ -251,6 +253,31 @@ public class TeacherPortalController {
         if (pct >= 60) return "C";
         if (pct >= 50) return "D";
         return "F";
+    }
+
+    // ── Events (read-only) ──────────────────────────────────────────────
+
+    /** Every whole-school event plus any event targeting one of this teacher's assigned classes. */
+    @GetMapping("/events")
+    public ResponseEntity<List<Event>> getEvents(Authentication auth) {
+        Teacher teacher = getTeacher(auth);
+        return ResponseEntity.ok(eventRepo.findVisibleToClasses(assignedClasses(teacher)));
+    }
+
+    @GetMapping("/events/{id}/photos")
+    public ResponseEntity<List<EventPhoto>> getEventPhotos(Authentication auth, @PathVariable Long id) {
+        Teacher teacher = getTeacher(auth);
+        Event event = eventRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+        requireEventAccess(teacher, event);
+        return ResponseEntity.ok(eventPhotoRepo.findByEventIdOrderByIdAsc(id));
+    }
+
+    /** A whole-school event (empty classes) is visible to everyone; otherwise the teacher must be assigned to one of it. */
+    private void requireEventAccess(Teacher teacher, Event event) {
+        if (event.getClasses() == null || event.getClasses().isEmpty()) return;
+        Set<String> assigned = assignedClasses(teacher);
+        boolean allowed = event.getClasses().stream().anyMatch(assigned::contains);
+        if (!allowed) throw new AccessDeniedException("This event isn't for any of your assigned classes");
     }
 
     // ── Syllabus ─────────────────────────────────────────────────────
